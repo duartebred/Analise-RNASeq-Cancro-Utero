@@ -1,4 +1,4 @@
-# Trabalho prático no âmbito da UC Extração de Conhecimento de Dados Biológicos
+# Trabalho prático no âmbito da unidade curricular "Extração de Conhecimento de Dados Biológicos"
 
 
 **Grupo composto por:**
@@ -11,6 +11,7 @@
 <div align="justify">
 Este trabalho prático foi desenvolvido no âmbito da UC Extraçáo de Conhecimentos de Dados Biológicos (2023/24), do Mestrado em Bioinformática da Escola de Engenharia da Universidade do Minho, e tem como objetivo principal analisar, através das ferramentas R e packages do Bioconductor, um conjunto de dados, acedidos a partir do cBioPortal, relacionados com o Carcinoma Endometrial do Corpo Uterino. 
 </div>
+
 
 
 **Link para acesso ao Dataset**
