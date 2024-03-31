@@ -1,4 +1,4 @@
-# Trabalho prático no âmbito da unidade curricular "Extração de Conhecimento de Dados Biológicos"
+# Análise RNASeq Cancro do Útero
 
 
 **Grupo composto por:**
