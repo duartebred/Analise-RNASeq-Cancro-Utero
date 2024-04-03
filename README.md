@@ -10,11 +10,9 @@
  
 
 <div align="justify">
-Este trabalho prático foi desenvolvido no âmbito da UC Extração de Conhecimentos de Dados Biológicos (2023/24), do Mestrado em Bioinformática da Escola de Engenharia da Universidade do Minho, e tem como objetivo principal analisar, através das ferramentas R e packages do Bioconductor, um conjunto de dados, acedidos a partir do cBioPortal, relacionados com o Carcinoma Endometrial do Corpo Uterino. 
+Este trabalho prático foi desenvolvido pelo grupo 5, no âmbito da UC Extração de Conhecimentos de Dados Biológicos (2023/24), do Mestrado em Bioinformática da Escola de Engenharia da Universidade do Minho, e tem como objetivo principal analisar, através das ferramentas R e packages do Bioconductor, um conjunto de dados, acedidos a partir do cBioPortal, relacionados com o Carcinoma Endometrial do Corpo Uterino. 
 
 Este repositório contém todos os materiais e códigos desenvolvidos para o trabalho prático da disciplina de Extração de Conhecimento de Dados Biológicos do ano letivo de 2023/2024. O projeto envolve a análise de conjuntos de dados de expressão genética utilizando o software R e pacotes do Bioconductor, focando em análises estatísticas, de enriquecimento, clustering, redução de dimensionalidade e aprendizagem de máquina. 
-
-O repositório foi desenvolvido pelo grupo de trabalho nº5.
 </div>
 
 **Estrutura do Repositório**
