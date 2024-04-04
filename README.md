@@ -22,12 +22,6 @@ Este repositório contém todos os materiais e códigos desenvolvidos para o tra
 - reports/: Relatórios em formato HTML gerados a partir do R Markdown, detalhando todas as fases da análise, desde a preparação dos dados até a discussão dos resultados.
 - README.md: Este arquivo, fornecendo uma visão geral do projeto, instruções de instalação e execução, e informação sobre a equipa.
 
-
-**Link para acesso ao Dataset**
-- [Dataset](https://www.cbioportal.org/study/summary?id=ucec_tcga_pan_can_atlas_2018)
-
-#
-
 # Fases do Projeto
 
 **Fase 1**
@@ -45,8 +39,9 @@ Este repositório contém todos os materiais e códigos desenvolvidos para o tra
 
 ##
 
-# Licença
 
-Este projeto está disponibilizado sob uma licença de uso livre. Qualquer pessoa tem a liberdade de utilizar, modificar e distribuir o código desenvolvido neste projeto, sob a condição de que qualquer uso ou distribuição do mesmo seja acompanhado de uma citação adequada aos autores originais e a este repositório.
+**Link para acesso ao Dataset**
+- [Dataset](https://www.cbioportal.org/study/summary?id=ucec_tcga_pan_can_atlas_2018)
 
+Nota: O dataset analisado está associado ao projeto [Pan-Cancer Analysis of Whole Genomes (PCAWG)](https://www.cell.com/pb-assets/consortium/pancanceratlas/pancani3/index.html), que culminou numa coleção de 27 [papers](https://pubmed.ncbi.nlm.nih.gov/?term=29625048%2C29596782%2C29622463%2C29617662%2C29625055%2C29625050%2C29617662%2C30643250%2C32214244%2C29625049%2C29850653%5Buid%5D), que se dedicam ao estudo de 33 tipos diferentes de cancro, de entre os quais o nosso: cancro endometrial do corpo uterino.
 
