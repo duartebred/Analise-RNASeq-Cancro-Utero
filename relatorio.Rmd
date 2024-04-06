@@ -1,0 +1,177 @@
+---
+title: "Carcinoma do endométrio do corpo uterino"
+author: "Duarte Velho(pg53841), Joana Lopes(pg53498), João Ferreira(pg52182), Ricardo Oliveira(pg53501)"
+output:
+  html_document: default
+  pdf_document: default
+---
+<style>
+  p {
+    text-align: justify;
+  }
+</style>
+
+# 1ª Parte- Exploração inicial dos dados e análise de expressão diferencial e de enriquecimento
+
+```{r,echo=FALSE,results='hide', warning = FALSE, message=FALSE, warning = FALSE, message=FALSE}
+#install.packages("jpeg")
+#install.packages("TCGAbiolinks")
+#install.packages("Biobase")
+#install.packages("DESeq2")
+#install.packages("ggbeeswarm")
+#install.packages("genefilter")
+#install.packages("pheatmap")
+#install.packages("org.Hs.eg.db")
+#install.packages("fgsea")
+#install.packages("ggplot2")
+#install.packages("xfun")
+#install.packages("SummarizedExperiment") 
+#install.packages("factoextra")
+#install.packages("Rtsne")
+#install.packages("EBImage")
+```
+
+```{r,echo=FALSE,results='hide', warning = FALSE, message=FALSE,warning = FALSE, message=FALSE}
+#library("jpeg")
+#library("TCGAbiolinks")
+#library("DESeq2")
+#library("Biobase")
+#library("DESeq2")
+#library("ggbeeswarm")
+#library("pheatmap")
+#library("org.Hs.eg.db")
+#library("fgsea")
+#library("ggplot2")
+#library("factoextra")
+#library("limma")
+#library("genefilter")
+#library("SummarizedExperiment")
+#library("Rtsne")
+#library("party")
+#library("rpart")
+#library("caret") 
+#library("rsample")
+
+```
+
+## Enquadramento
+
+Nos dias de hoje, o cancro é uma das principais causas de morte a nível mundial, sendo que, segundo a Organização Mundial da Saúde (OMS), em 2020, foram diagnosticados cerca de 19,3 milhões de novos casos de cancro e provocou a morte de aproximadamente 10 milhões de pessoas [1]. O preocupante aumento da incidência do cancro ao longo das ultimas décadas levou ao surgimento de iniciativas, tal como a PanCancer Atlas, que visam encontrar respostas para as grandes e abrangentes questões sobre o cancro, através da análise de tumores caracterizados no conjunto de dados resultantes do projeto de The Cancer Genome Atlas (TCGA).
+O TCGA é um programa de genómica de referência na área do cancro que, em colaboração com o Instituto Nacional do Cancro (NCI) e o Instituto Nacional de Pesquisa do Genoma Humano (NHGRI) dos Estados Unidos, caracterizou mais de 20 mil cancros primários abrangendo 33 tipos de cancro. Os tipos de cancro selecionados para estudo cumprem requisitos tais como ter um mau prognóstico, ter um impacto geral na saúde pública, disponibilidade de amostras com a qualidade e quantidade desejadas, entre outros. (National Cancer Institute, 2022)
+
+O cancro endométrico do corpo uterino, um dos cancros incluídos no TCGA, é o sétimo tumor maligno mais frequente no mundo e o quarto mais comum na mulher sendo a doença ginecológica maligna prevalente tendo provocado em 2011 mais de 8 mil mortes [2,3]. De todos os cancros do corpo uterino mais de 83% correspondem a carcinomas endométrico, enquanto apenas 10% dos diagnósticos são classificados como sarcomas [2]. Este tipo de cancro tem ganhando maior atenção por parte da comunidade científica, uma vez que se verificou um aumento da sua incidência com a agravante de que a taxa de sobrevivência aos 5 anos é consideravelmente menor que em 1975 passando de 88% para cerca de 84% em 2006 indicando um aumento na mortalidade [3].
+A taxa de sobrevivência está fortemente correlacionada com o estádio da doença aquando do diagnóstico, sendo que para pacientes no estádio inicial se considera curável atingindo cerca de 96% de sobrevivência, no entanto para fases mais avançadas e de alto grau e considerado letal reduzindo drasticamente a taxa de sobrevivência de 96 para 17%.(Costa & Cunha, n.d.)
+
+```{r,echo=FALSE,results= 'markup', fig.cap= "Fig 1- Anatomia do sistema reprodutor feminino (Adaptdado de National Cancer Institute)",fig.align='center'}
+image=readJPEG("cancro_endometrico.jpg")
+
+plot(0, 0, type = "n", xlim = c(0, 1), ylim = c(0, 1), xlab = "", ylab = "", axes= FALSE)
+rasterImage(image, 0, 0, 1, 1)
+```
+Tendo em conta o que foi descrito anteriormente, este trabalho tem como objetivo analisar o perfil transcriptómico de células endometeriais do corpo uterino de pacientes diagnosticados com cancro para determinadas condições descritas nos metadados de modo a realizar a análise da expressão diferencial com o intuito de compreender qual o efeito do fator no perfil transcriptómico das células e como esse perfil se traduz na gravidade da doença observada.
+Os dados utilizados neste trabalho estão disponíveis em https://shorturl.at/wJZ34 e estão associados ao projeto "Uterine Corpus Endometrial Carcinoma TCGA PanCancer data"
+
+## Extração dos dados de transcriptómica e respetivos metadados da base de dados
+
+Com o objetivo de analisar os dados de transcriptómica referente ao carcinoma endométrio do corpo uterino, procedemos à extração da informação que se encontra presente no website cBioPortal onde se encontram disponibilizados, de forma gratuita, uma grande diversidade de alterações genómicas de vários tipos de cancro, incluindo o cancro selecionado para estudo. Para esse efeito recorremos ao package TCGAbiolinks, uma vez que este possibilita a interação com a base de dados cBioPortal e apresenta várias funções que possibilitam realizar queries à base de dados filtrando os datasets que se seleciona para proceder, posteriormente, ao seu download
+
+```{r,results= 'markup'}
+query_UCEC = GDCquery(
+  project = "TCGA-UCEC",
+  data.category = "Transcriptome Profiling", 
+  data.type = "Gene Expression Quantification",
+  workflow.type = "STAR - Counts"
+)
+
+
+GDCdownload(query=query_UCEC)
+
+
+rna_seq_UCEC = GDCprepare(query = query, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
+```
+
+A função GDCquery() é utilizada para realizar a query à base dados. Nesta função são definidos vários parâmetros que permitem filtrar o data set que posteriormente vai ser descarregado. O parâmetro "project" corresponde ao id atribuído ao tipo de cancro de modo a apenas considerar a informação disponível referente ao carcinoma endométrio do corpo uterino. A "data.category" é usado para especificar a categoria de dados que se pretende selecionar, neste caso, como pretendemos realizar a análise da transcriptómica selecionou-se a categoria "Transcriptome Profiling" para selecionar os dados relacionados com o perfil de expressão de genes. De entre os dados do perfil de expressão de genes restringiu-se apenas aos dados referentes à quantificação da expressão de genes definindo "data.type" como Gene expression quantification. Por fim, indicou-se o tipo de análise da expressão genética desejada, optando-se por recorrer ao START-Counts. Este workflow indica que o algoritmo utilizado para a contagem da expressão genética a partir do alinhamento das sequências foi realizada com a ferramenta STAR.
+
+A função GDCdownload() é utilizada para realizar o download dos dados consoante a query realizada e estabelecida na função anterior
+
+#retorna a classe do objeto (tipo de dados ou a estrutura de dados que o objeto 
+#representa, o que por sua vez determina quais funções podem ser aplicadas a ele)
+class(rna_seq_UCEC)
+#retorna as dimensões do objeto(matriz ou um dataframe;objeto mais complexo)
+dim(rna_seq_UCEC)
+
+#extrair componentes de um objeto por nome (através de colunas)
+rna_seq_UCEC$paper_BCR
+rna_seq_UCEC$paper_Gender
+rna_seq_UCEC$paper_Grade
+rna_seq_UCEC$paper_IDH.status
+
+#atribui a um novo objeto chamado meta_UCEC, os metadados associados ao conjunto 
+#de dados rna_seq_UCEC
+meta_UCEC = colData(rna_seq_UCEC)
+#retorna as dimensões dos metadados 
+dim(meta_UCEC)
+#extrair componentes de um objeto por nome (através de colunas)
+meta_UCEC$patient
+meta_UCEC$paper_IDH.status
+
+
+##################################
+
+
+#Análise de Expressão Diferencial com DESeq2
+library(DESeq2)  #Nota: pacote DESeq2, uma ferramenta para análise de expressão diferencial de dados de contagem de sequenciamento de RNA (RNA-Seq)
+
+#Filtra os dados de RNA para incluir apenas amostras não nulo
+data_de <- rna_seq_UCEC[,!is.na(rna_seq_UCEC$paper_IDH.status)]
+
+#Cria um objeto DESeqDataSet para análise, especificando um design experimental 
+#que compara o status de IDH
+ddsSE <- DESeqDataSet(data_de, design = ~ paper_IDH.status)
+
+#Filtragem de Genes: Remove genes com contagens baixas (menos de 10) 
+#para melhorar a confiabilidade da análise de expressão diferencial.
+keep <- rowSums(counts(ddsSE)) >= 10
+
+#Executa a análise de expressão diferencial com a função DESeq
+ddsSE <- ddsSE[keep,]
+ddsSE <- DESeq(ddsSE)
+
+resultsNames(ddsSE)
+#comparação "WT vs Mutant" para o status do IDH, e converte os resultados para um dataframe
+res <- results(ddsSE, name = "paper_IDH.status_WT_vs_Mutant")
+dea <- as.data.frame(res)
+#resume os resultados para obter uma visão geral dos achados estatísticos, 
+#como o número de genes significativamente diferencialmente expressos
+summary(res)
+
+
+#Processamento de Dados Clínicos com TCGAbiolinks
+## dados clinicos
+
+#buscar dados clínicos do projeto TCGA-UCEC (carcinoma endometrial uterino), 
+#especificamente suplementos clínicos, através de GDCquery
+query_clin <- GDCquery(project = "TCGA-UCEC", 
+                       data.category = "Clinical",
+                       data.type = "Clinical Supplement", 
+                       data.format = "BCR Biotab")
+#Baixa e prepara os dados clínicos
+GDCdownload(query_clin)
+clinical.UCEC <- GDCprepare(query_clin)
+names(clinical.UCEC)
+
+head (clinical.UCEC$clinical_drug_UCEC )
+df = as.data.frame(clinical.UCEC$clinical_patient_UCEC)
+View(df)
+```
+
+
+Todos os ficheiros a ser analisados têm em comum um "patient_ID", sendo que o ficheiro "data_clinical_patient" possui metadados relativos aos pacientes, o ficheiro "data_clinical_sample" possui metadados relativos à amostra e o ficheiro "data_mrna_seq_v2_rsem_zscores_ref_all_samples" possui dados normalizados relativos ao sequenciamento de mRNA. Outros ficheiros estão ao nosso dispor para complementar a nossa análise caso seja necessário numa fase posterior.
+
+# Bibliografia
+
+1. Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries. CA Cancer J Clin. 2021 May;71(3):209-249. \doi: 10.3322/caac.21660. 
+
+2. Creasman WT, Odicino F, Maisonneuve P, Quinn MA, Beller U, Benedet JL, Heintz A, Ngan H, Pecorelli S. Carcinoma of the Corpus Uteri. Int J Gynaecol Obstet. 2006 Nov;95 Suppl 1:S105-S143. \doi: 10.1016/S0020-7292(06)60031-3.
+
+3. Leslie KK, Thiel KW, Goodheart MJ, De Geest K, Jia Y, Yang S. Endometrial cancer. Obstet Gynecol Clin North Am. 2012 Jun;39(2):255-68. \doi: 10.1016/j.ogc.2012.04.001.
