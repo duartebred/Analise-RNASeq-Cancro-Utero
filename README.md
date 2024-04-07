@@ -17,7 +17,6 @@ Este repositório contém todos os materiais e códigos desenvolvidos para o tra
 
 **Estrutura do Repositório**
 
-- data/: Diretório contendo os conjuntos de dados de expressão genética usados no projeto.
 - scripts/: Scripts em R utilizados para a análise de dados, incluindo pré-processamento, análises estatísticas, e algoritmos de aprendizagem de máquina.
 - reports/: Relatórios em formato HTML gerados a partir do R Markdown, detalhando todas as fases da análise, desde a preparação dos dados até a discussão dos resultados.
 - README.md: Este arquivo, fornecendo uma visão geral do projeto, instruções de instalação e execução, e informação sobre a equipa.
