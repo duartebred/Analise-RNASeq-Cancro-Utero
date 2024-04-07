@@ -31,9 +31,10 @@ output:
 #install.packages("EBImage")
 ```
 
-```{r,echo=FALSE,results='hide', warning = FALSE, message=FALSE,warning = FALSE, message=FALSE}
-#library("jpeg")
+```{r,echo=TRUE,results='hide', warning = FALSE, message=FALSE,warning = FALSE, message=FALSE}
+library("jpeg")
 #library("TCGAbiolinks")
+library("SummarizedExperiment")
 #library("DESeq2")
 #library("Biobase")
 #library("DESeq2")
@@ -45,7 +46,6 @@ output:
 #library("factoextra")
 #library("limma")
 #library("genefilter")
-#library("SummarizedExperiment")
 #library("Rtsne")
 #library("party")
 #library("rpart")
@@ -76,97 +76,73 @@ Os dados utilizados neste trabalho estão disponíveis em https://shorturl.at/wJ
 Com o objetivo de analisar os dados de transcriptómica referente ao carcinoma endométrio do corpo uterino, procedemos à extração da informação que se encontra presente no website cBioPortal onde se encontram disponibilizados, de forma gratuita, uma grande diversidade de alterações genómicas de vários tipos de cancro, incluindo o cancro selecionado para estudo. Para esse efeito recorremos ao package TCGAbiolinks, uma vez que este possibilita a interação com a base de dados cBioPortal e apresenta várias funções que possibilitam realizar queries à base de dados filtrando os datasets que se seleciona para proceder, posteriormente, ao seu download
 
 ```{r,results= 'markup'}
-query_UCEC = GDCquery(
-  project = "TCGA-UCEC",
-  data.category = "Transcriptome Profiling", 
-  data.type = "Gene Expression Quantification",
-  workflow.type = "STAR - Counts"
-)
+#query_UCEC = GDCquery(
+  #project = "TCGA-UCEC",
+  #data.category = "Transcriptome Profiling", 
+  #data.type = "Gene Expression Quantification",
+  #workflow.type = "STAR - Counts"
+#)
 
 
-GDCdownload(query=query_UCEC)
+#GDCdownload(query=query_UCEC)
 
 
-rna_seq_UCEC = GDCprepare(query = query, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
+#rna_seq_UCEC = GDCprepare(query = query, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
+rna_seq_UCEC = get(load("mRNA_TCGA-UCEC.rda"))
 ```
 
 A função GDCquery() é utilizada para realizar a query à base dados. Nesta função são definidos vários parâmetros que permitem filtrar o data set que posteriormente vai ser descarregado. O parâmetro "project" corresponde ao id atribuído ao tipo de cancro de modo a apenas considerar a informação disponível referente ao carcinoma endométrio do corpo uterino. A "data.category" é usado para especificar a categoria de dados que se pretende selecionar, neste caso, como pretendemos realizar a análise da transcriptómica selecionou-se a categoria "Transcriptome Profiling" para selecionar os dados relacionados com o perfil de expressão de genes. De entre os dados do perfil de expressão de genes restringiu-se apenas aos dados referentes à quantificação da expressão de genes definindo "data.type" como Gene expression quantification. Por fim, indicou-se o tipo de análise da expressão genética desejada, optando-se por recorrer ao START-Counts. Este workflow indica que o algoritmo utilizado para a contagem da expressão genética a partir do alinhamento das sequências foi realizada com a ferramenta STAR.
 
-A função GDCdownload() é utilizada para realizar o download dos dados consoante a query realizada e estabelecida na função anterior
+A função GDCdownload() é utilizada para realizar o download dos dados consoante a query realizada e estabelecida na função anterior. Em seguida, recorreu-se à função GDCprepare() com o intuito de gerar um objeto "SummarizedExperiment" de modo a compilar a informação descarregada num único objeto de modo a facilitar a análise dos dados. É de notar que a função também permite gravar os dados em formato "rdata" de modo a facilitar o carregamento dos dados através da função load(). É importante referir que a utilização deste workflow permite o download simultaneo quer dos dados da expressão genética quer dos metadados associados às amostras e aos genes.
 
-#retorna a classe do objeto (tipo de dados ou a estrutura de dados que o objeto 
-#representa, o que por sua vez determina quais funções podem ser aplicadas a ele)
-class(rna_seq_UCEC)
-#retorna as dimensões do objeto(matriz ou um dataframe;objeto mais complexo)
-dim(rna_seq_UCEC)
+## Análise inicial dos dados
 
-#extrair componentes de um objeto por nome (através de colunas)
-rna_seq_UCEC$paper_BCR
-rna_seq_UCEC$paper_Gender
-rna_seq_UCEC$paper_Grade
-rna_seq_UCEC$paper_IDH.status
+Nesta fase procedeu-se à exploração incial dos dados de forma a perceber a dimensão dos dados correspondente à expressão genética bem como dos metadados.
 
-#atribui a um novo objeto chamado meta_UCEC, os metadados associados ao conjunto 
-#de dados rna_seq_UCEC
-meta_UCEC = colData(rna_seq_UCEC)
-#retorna as dimensões dos metadados 
-dim(meta_UCEC)
-#extrair componentes de um objeto por nome (através de colunas)
-meta_UCEC$patient
-meta_UCEC$paper_IDH.status
+```{r, echo=TRUE}
+#retorna a classe e a dimensão da estrutura de dados
+class(rna_seq_UCEC);dim(rna_seq_UCEC)
 
 
-##################################
+#extracao dos metadados associados às das linhas
+dim(SummarizedExperiment::rowData(rna_seq_UCEC));colnames(SummarizedExperiment::rowData(rna_seq_UCEC))
 
 
-#Análise de Expressão Diferencial com DESeq2
-library(DESeq2)  #Nota: pacote DESeq2, uma ferramenta para análise de expressão diferencial de dados de contagem de sequenciamento de RNA (RNA-Seq)
+#extracao dos metadadosassociados às colunas
+dim(SummarizedExperiment::colData(rna_seq_UCEC));rownames(SummarizedExperiment::colData(rna_seq_UCEC))[1:5]
+```
+Através da análise feita acima é possível verificar que o nosso dataset é um objeto "SummarizedExperiment" que possui 60660 linhas e 589 colunas. Com a extração dos metadados associados as linhas podemos concluir que as linhas do objeto correspondem aos genes, sendo que, para cada gene, existem 10 metadados associados a cada gene incluindo o gene_id que corresponde a um código único utilizado pela base de dados Ensembl para a identificação dos varios genes.
+Por outro lado, as colunas possuem 78 metadados que possibilitam a caracterização das 589 amostras utilizadas neste estudo permitindo analisar o impacto que as diferentes características possuem nos dados de expressão genética.
+É importante referir que os metadados associados às colunas passam a ter uma apresentação diferente, isto é, as linhas passam a ser identificadas com o id da amostra enquanto no objeto original as linhas são identicadas pelo id do gene
 
-#Filtra os dados de RNA para incluir apenas amostras não nulo
-data_de <- rna_seq_UCEC[,!is.na(rna_seq_UCEC$paper_IDH.status)]
-
-#Cria um objeto DESeqDataSet para análise, especificando um design experimental 
-#que compara o status de IDH
-ddsSE <- DESeqDataSet(data_de, design = ~ paper_IDH.status)
-
-#Filtragem de Genes: Remove genes com contagens baixas (menos de 10) 
-#para melhorar a confiabilidade da análise de expressão diferencial.
-keep <- rowSums(counts(ddsSE)) >= 10
-
-#Executa a análise de expressão diferencial com a função DESeq
-ddsSE <- ddsSE[keep,]
-ddsSE <- DESeq(ddsSE)
-
-resultsNames(ddsSE)
-#comparação "WT vs Mutant" para o status do IDH, e converte os resultados para um dataframe
-res <- results(ddsSE, name = "paper_IDH.status_WT_vs_Mutant")
-dea <- as.data.frame(res)
-#resume os resultados para obter uma visão geral dos achados estatísticos, 
-#como o número de genes significativamente diferencialmente expressos
-summary(res)
+## Preparação e pre-processamento dos dados
+Nesta etapa preparamos o dataset para ser, posteriormente submetido a análise de expressão diferencial e de enriquecimento. Para esse efeito, optamos por separar os dados referentes à expressão genética e a informação relativa aos metadados do objeto incial para posteriormente realizar a filtragem dos dados.
 
 
-#Processamento de Dados Clínicos com TCGAbiolinks
-## dados clinicos
+```{r extração da informação}
+# extração da informação da expressão de genes
+geneExp = SummarizedExperiment::assay(rna_seq_UCEC)
 
-#buscar dados clínicos do projeto TCGA-UCEC (carcinoma endometrial uterino), 
-#especificamente suplementos clínicos, através de GDCquery
-query_clin <- GDCquery(project = "TCGA-UCEC", 
-                       data.category = "Clinical",
-                       data.type = "Clinical Supplement", 
-                       data.format = "BCR Biotab")
-#Baixa e prepara os dados clínicos
-GDCdownload(query_clin)
-clinical.UCEC <- GDCprepare(query_clin)
-names(clinical.UCEC)
 
-head (clinical.UCEC$clinical_drug_UCEC )
-df = as.data.frame(clinical.UCEC$clinical_patient_UCEC)
-View(df)
+# extração dos metadados referentes às amostras
+amostras_metadados = colData(rna_seq_UCEC) 
+metadados_reduzido=amostras_metadados[,c("paper_tumor_grade","paper_age","paper_race")]
 ```
 
 
-Todos os ficheiros a ser analisados têm em comum um "patient_ID", sendo que o ficheiro "data_clinical_patient" possui metadados relativos aos pacientes, o ficheiro "data_clinical_sample" possui metadados relativos à amostra e o ficheiro "data_mrna_seq_v2_rsem_zscores_ref_all_samples" possui dados normalizados relativos ao sequenciamento de mRNA. Outros ficheiros estão ao nosso dispor para complementar a nossa análise caso seja necessário numa fase posterior.
+```{r análise exploratória dos dados,fig.align='center}
+table(is.na(geneExp))
+
+
+summary(as.data.frame(metadados_reduzido))
+hist(metadados_reduzido$paper_age, main= "Idade dos pacientes em estudo", xlab="Idade", ylab="Frequência absoluta",col="orange")
+
+boxplot(metadados_reduzido$paper_age~metadados_reduzido$paper_tumor_grade,horizontal=T)
+
+
+```
+
+##################################
 
 # Bibliografia
 
