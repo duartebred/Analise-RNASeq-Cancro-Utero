@@ -56,22 +56,16 @@ geneExp <- SummarizedExperiment::assay(rna_seq_UCEC)
 
 # Metadados das amostras
 ## Análise exploratória
-not_reported = sapply(amostras_metadados,function(x) sum(x == "not reported", na.rm = TRUE))
-Not_Reported = sapply(amostras_metadados,function(x) sum(x == "Not Reported", na.rm = TRUE))
-nas = sapply(amostras_metadados,function(x) sum(is.na(x)))
-par(mfrow = c(1, 3))
-hist(not_reported[not_reported!=0],ylab="Número de colunas")
-hist(Not_Reported[Not_Reported!=0],ylab="Número de colunas")
-hist(nas[nas!=0],ylab="Número de colunas")
 
 # remoção de colunas com mais de 10% de valores omissos
 rm_not_reported = which(sapply(amostras_metadados,function(x) sum(x == "not reported", na.rm = TRUE)) > 60)
-rm_Not_Reported = which(sapply(amostras_metadados,function(x) sum(x == "Not Reported", na.rm = TRUE)) > 60)
+rm_Not_Reported = which(sapply(amostras_metadados,function(x) sum(x == "Not Reported",na.rm = TRUE)) > 60)
 rm_nas = which(sapply(amostras_metadados, function(x) sum(is.na(x))) > 60)
-amostras_meta = amostras_metadados[, -c(rm_not_reported, rm_Not_Reported, rm_nas)]
+amostras_meta_reduzido = amostras_metadados[, -c(rm_not_reported, rm_Not_Reported, rm_nas)]
+dim(amostras_meta_reduzido)
 
 
-colnames(metadata_matriz_clean)
+
 
 table(as.data.frame(metadata_matriz_clean$vital_status))
 summary(as.data.frame(metadata_matriz_clean$age_at_diagnosis))
