@@ -71,26 +71,26 @@ amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras
 
 # Análise exploratória dos metadados
 # vital_status
-tabela_vital = table(amostras_meta_reduzido$vital_status, useNA = "ifany")
-tabela_vital = tabela_vital/sum(tabela_vital)*100
-barplot(tabela_vital)
+tabela_vital = prop.table(table(amostras_meta_reduzido$vital_status, useNA = "ifany")) *100
+barplot(tabela_vital, names.arg= c("Alive","Dead","NAs"), col= "lightblue", ylab="Percentagem",
+        main="Distribuição de Vitalidade dos Pacientes")
 
 
 # primary_diagnosis
-tabela_primary = table(amostras_meta_reduzido$primary_diagnosis, useNA = "ifany")/sum(tabela_primary) *100
-tabela_primary = tabela_primary/sum(tabela_primary)*100
-outros = tabela_primary[1] + tabela_primary[2] + tabela_primary[3] + tabela_primary[5] + tabela_primary[6] +tabela_primary[8] + tabela_primary[9]
-primary_comprimido = as.matrix(data.frame(outros,tabela_primary[4],tabela_primary[7], row.names = NULL))
-colnames(primary_comprimido) = c("Outros","Endometrioid adenocarcinoma, NOS","Serous cystadenocarcinoma, NOS" )
-barplot(primary_comprimido, legend.text = c("Outros","Endometrioid adenocarcinoma, NOS","Serous cystadenocarcinoma, NOS" ))
-pie(tabela_primary)
+tabela_primary = prop.table(table(amostras_meta_reduzido$primary_diagnosis, useNA = "ifany")) * 100
+outros = sum(tabela_primary[c(1, 2, 3, 5, 6, 8, 9)])
+primary_comprimido = matrix(c(outros, tabela_primary[4], tabela_primary[7]), ncol = 3,
+    dimnames = list(NULL, c("Outros", "Endometrioid adenocarcinoma, NOS", "Serous cystadenocarcinoma, NOS")))
+labels_primary <- c("Outros", "Endometrioid adenocarcinoma, NOS", "Serous cystadenocarcinoma, NOS")
+pie(primary_comprimido, labels = paste(labels_primary, sprintf("%.1f%%", primary_comprimido)),
+    col = c('lightgreen', 'lightblue', 'lightpink'), main = "Distribuição de Diagnósticos Primários")
 
 
 # figo_stage
-tabela_figo = table(amostras_meta_reduzido$figo_stage,  useNA = "ifany")
+tabela_figo = prop.table(table(amostras_meta_reduzido$figo_stage,  useNA = "ifany")) *100
 labels_figo = c("Stage I", "Stage II", "Stage III", "Stage IV", "NAs")
-percentagens_figo = tabela_figo/sum(tabela_figo)*100
-pie(tabela_figo, labels = paste(labels_figo, sprintf("%.1f%%", percentages)))
+pie(tabela_figo, labels = paste(labels_figo, sprintf("%.1f%%", tabela_figo)), col=c('lightblue','lightgreen',
+    'yellow','lightpink','orchid'), main= "Distribuição de Estágios de cancro Ginecológico (FIGO)")
 
 
 # age_at_index
