@@ -13,6 +13,7 @@ library(SummarizedExperiment)
 
 
 # Realização de uma consulta ao Genomic Data Commons (GDC) para obter os dados de expressão referentes ao projeto em estudo
+projeto <- "TCGA-UCEC"
 query_TCGA_UCEC <- GDCquery(
   project = projeto,
   data.category = "Transcriptome Profiling", 
@@ -69,7 +70,33 @@ amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras
 
 
 # Análise exploratória dos metadados
+# vital_status
+tabela_vital = table(amostras_meta_reduzido$vital_status, useNA = "ifany")
+tabela_vital = tabela_vital/sum(tabela_vital)*100
+barplot(tabela_vital)
 
+
+# primary_diagnosis
+tabela_primary = table(amostras_meta_reduzido$primary_diagnosis, useNA = "ifany")/sum(tabela_primary) *100
+tabela_primary = tabela_primary/sum(tabela_primary)*100
+outros = tabela_primary[1] + tabela_primary[2] + tabela_primary[3] + tabela_primary[5] + tabela_primary[6] +tabela_primary[8] + tabela_primary[9]
+primary_comprimido = as.matrix(data.frame(outros,tabela_primary[4],tabela_primary[7], row.names = NULL))
+colnames(primary_comprimido) = c("Outros","Endometrioid adenocarcinoma, NOS","Serous cystadenocarcinoma, NOS" )
+barplot(primary_comprimido, legend.text = c("Outros","Endometrioid adenocarcinoma, NOS","Serous cystadenocarcinoma, NOS" ))
+pie(tabela_primary)
+
+
+# figo_stage
+tabela_figo = table(amostras_meta_reduzido$figo_stage,  useNA = "ifany")
+labels_figo = c("Stage I", "Stage II", "Stage III", "Stage IV", "NAs")
+percentagens_figo = tabela_figo/sum(tabela_figo)*100
+pie(tabela_figo, labels = paste(labels_figo, sprintf("%.1f%%", percentages)))
+
+
+# age_at_index
+summary(amostras_meta_reduzido$age_at_index)
+boxplot(amostras_meta_reduzido$age_at_index,horizontal = T)
+hist(amostras_meta_reduzido$age_at_index)
 
 
 
