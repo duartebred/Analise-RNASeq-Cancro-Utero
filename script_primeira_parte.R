@@ -55,8 +55,6 @@ geneExp <- SummarizedExperiment::assay(rna_seq_UCEC)
 
 
 # Metadados das amostras
-## Análise exploratória
-
 # remoção de colunas com mais de 10% de valores omissos
 rm_not_reported = which(sapply(amostras_metadados,function(x) sum(x == "not reported", na.rm = TRUE)) > 60)
 rm_Not_Reported = which(sapply(amostras_metadados,function(x) sum(x == "Not Reported",na.rm = TRUE)) > 60)
@@ -65,21 +63,12 @@ amostras_meta_reduzido = amostras_metadados[, -c(rm_not_reported, rm_Not_Reporte
 dim(amostras_meta_reduzido)
 
 
+# seleção apenas das colunas de interesse e transformação da coluna figo_stage
+amostras_meta_reduzido = amostras_meta_reduzido[,c("vital_status","primary_diagnosis","age_at_index","figo_stage")]
+amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_meta_reduzido$figo_stage)
 
 
-table(as.data.frame(metadata_matriz_clean$vital_status))
-summary(as.data.frame(metadata_matriz_clean$age_at_diagnosis))
-pie(table(as.data.frame(metadata_matriz_clean$primary_diagnosis)))
-summary(as.data.frame(metadata_matriz_clean$age_at_index))
-boxplot(as.data.frame(metadata_matriz_clean$age_at_index),horizontal=T)
-hist(metadata_matriz_clean$age_at_index)
-table(as.data.frame(metadata_matriz_clean$figo_stage))
-summary(as.data.frame(metadata_matriz_clean$figo_stage))
-sum(is.na(metadata_matriz_clean$figo_stage))
-dim(metadata_matriz_clean)
-
-
-
+# Análise exploratória dos metadados
 
 
 
@@ -123,37 +112,6 @@ names(meta_UCEC)
 #extrair componentes de um objeto por nome (através de colunas)
 meta_UCEC$patient
 meta_UCEC$paper_vital_status
-
-
-##################################
-#Processamento de Dados Clínicos com TCGAbiolinks
-## dados clinicos
-
-#buscar dados clínicos do projeto TCGA-UCEC (carcinoma endometrial uterino), 
-#especificamente suplementos clínicos, através de GDCquery
-query_clin <- GDCquery(project = "TCGA-UCEC", 
-                       data.category = "Clinical",
-                       data.type = "Clinical Supplement", 
-                       data.format = "BCR Biotab")
-#Baixa e prepara os dados clínicos
-GDCdownload(query = query_clin)
-clinical.UCEC <- GDCprepare(query = query_clin, save = TRUE, save.filename = "clinical_data_UCEC.rda")
-#listar os nomes dos componentes do objeto
-names(clinical.UCEC)
-
-#exibir as primeiras linhas da coluna ou lista clinical_drug_ucec contida dentro do objeto clinical.UCEC
-head (clinical.UCEC$clinical_drug_ucec)
-#converte os dados contidos em clinical.UCEC$clinical_patient_ucec para um 
-#dataframe e atribui esse novo dataframe à variável df
-df = as.data.frame(clinical.UCEC$clinical_patient_ucec)
-View(df)
-
-
-#######################################
-
-
-
-
 
 # Extrair apenas a palavra "Stage" e os números romanos
 figo_stage <- gsub(".*\\b(Stage [VI]+).*", "\\1", metadata_matriz_clean$figo_stage)
