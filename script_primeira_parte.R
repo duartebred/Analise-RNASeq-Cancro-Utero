@@ -143,18 +143,40 @@ head (clinical.UCEC$clinical_drug_ucec)
 df = as.data.frame(clinical.UCEC$clinical_patient_ucec)
 View(df)
 
+
 #######################################
 #Análise exploratória
 #Pré-processamento e filtragem
 #retirar as colunas dos metadados onde havia mais de 60 elementos como: 
 #“not/Not reported/Reported” e/ou “NA”
 
-cols_with_not_reported <- which(sapply(meta_UCEC,function(x) sum(x == "not reported", na.rm = TRUE)) > 60)
-cols_with_Not_Reported <- which(sapply(meta_UCEC,function(x) sum(x == "Not Reported", na.rm = TRUE)) > 60)
-cols_with_NA <- which(sapply(meta_UCEC, function(x) sum(is.na(x))) > 60)
+cols_with_not_reported <- which(sapply(amostras_metadados,function(x) sum(x == "not reported", na.rm = TRUE)) > 60)
+cols_with_Not_Reported <- which(sapply(amostras_metadados,function(x) sum(x == "Not Reported", na.rm = TRUE)) > 60)
+cols_with_NA <- which(sapply(amostras_metadados, function(x) sum(is.na(x))) > 60)
 # remover as colunas baseadas nos critérios específicos de cima
-metadata_matriz_clean <- meta_UCEC[, -c(cols_with_not_reported, cols_with_Not_Reported, cols_with_NA)] 
+metadata_matriz_clean <- amostras_metadados[, -c(cols_with_not_reported, cols_with_Not_Reported, cols_with_NA)]
+colnames(metadata_matriz_clean)
+
+table(as.data.frame(metadata_matriz_clean$vital_status))
+summary(as.data.frame(metadata_matriz_clean$age_at_diagnosis))
+pie(table(as.data.frame(metadata_matriz_clean$primary_diagnosis)))
+summary(as.data.frame(metadata_matriz_clean$age_at_index))
+boxplot(as.data.frame(metadata_matriz_clean$age_at_index),horizontal=T)
+hist(metadata_matriz_clean$age_at_index)
+table(as.data.frame(metadata_matriz_clean$figo_stage))
+summary(as.data.frame(metadata_matriz_clean$figo_stage))
+sum(is.na(metadata_matriz_clean$figo_stage))
 dim(metadata_matriz_clean)
+
+
+
+
+# Extrair apenas a palavra "Stage" e os números romanos
+figo_stage <- gsub(".*\\b(Stage [VI]+).*", "\\1", metadata_matriz_clean$figo_stage)
+
+
+# Visualizar o resultado
+print(metadata_matriz_clean$figo_stage)
 
 
 #código utilizado para extrair a informação relacionada à contagem da expressão dos genes do objeto rna_seq_UCEC
