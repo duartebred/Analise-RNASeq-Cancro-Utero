@@ -81,7 +81,7 @@ tabela_primary = prop.table(table(amostras_meta_reduzido$primary_diagnosis, useN
 outros = sum(tabela_primary[c(1, 2, 3, 5, 6, 8, 9)])
 primary_comprimido = matrix(c(outros, tabela_primary[4], tabela_primary[7]), ncol = 3,
     dimnames = list(NULL, c("Outros", "Endometrioid adenocarcinoma, NOS", "Serous cystadenocarcinoma, NOS")))
-labels_primary <- c("Outros", "Endometrioid adenocarcinoma, NOS", "Serous cystadenocarcinoma, NOS")
+labels_primary = c("Outros", "Endometrioid adenocarcinoma, NOS", "Serous cystadenocarcinoma, NOS")
 pie(primary_comprimido, labels = paste(labels_primary, sprintf("%.1f%%", primary_comprimido)),
     col = c('lightgreen', 'lightblue', 'lightpink'), main = "Distribuição de Diagnósticos Primários")
 
@@ -94,10 +94,12 @@ pie(tabela_figo, labels = paste(labels_figo, sprintf("%.1f%%", tabela_figo)), co
 
 
 # age_at_index
-summary(amostras_meta_reduzido$age_at_index)
-boxplot(amostras_meta_reduzido$age_at_index,horizontal = T)
-hist(amostras_meta_reduzido$age_at_index)
-
+idade_pacientes = amostras_meta_reduzido$age_at_index
+summary(idade_pacientes)
+par(mfrow = c(2, 1))
+boxplot(idade_pacientes,horizontal=T, col = "purple", main='Histograma da idade dos pacientes')
+hist(idade_pacientes, xlab = 'Idade dos Pacientes', ylab = 'Frequência', main = 'Histograma da Idade dos Pacientes',
+     col='lightblue')
 
 
 # criar vetor logica em que diz que linhas é que possuem grade diferente de na
