@@ -203,6 +203,7 @@ DESeq2::plotMA(resultados, main="DESeq2") # visualização gráfica dos resultad
 
 plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="vital_status", pch = 19)
 
+# heatmap
 
 vsd <- varianceStabilizingTransformation(ddsSE_norm, blind = FALSE)
 select = rownames(head(resOrdered,20))
