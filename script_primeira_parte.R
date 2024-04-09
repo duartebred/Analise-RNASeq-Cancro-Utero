@@ -145,126 +145,44 @@ t.test(aov_estado_vital$residuals, mu=0) # verificação da homogeneidade das va
 
 kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$vital_status) # teste não parametrico
 
-# ALTERNATIVA
 
-# contagens por milhao
-gene_exp_filtrado = rna_seq_UCEC[,!is.na(rna_seq_UCEC$figo_stage)]
-myCPM = cpm(assay(gene_exp_filtrado), log = T)
-head(myCPM)
-# filtra dados para ter apenas os genes com mais de 0.5 em pelo menos 2 amostras
-thresh = myCPM > 0.5
-keep = rowSums(thresh) >= 2
-counts.keep = assay(gene_exp_filtrado)[keep,]
-summary(keep)
-dim(counts.keep)
-# cria objeto DGEList
-dgeObj = DGEList(counts.keep)
-
-design = model.matrix(~ gene_exp_filtrado$figo_stage)
-design
-
-dgeObj = estimateCommonDisp(dgeObj)
-dgeObj = estimateGLMTrendedDisp(dgeObj)
-dgeObj = estimateTagwiseDisp(dgeObj)
-
-fit <- glmFit(dgeObj, design)
-lrt.BvsL <- glmLRT(fit, coef=2)
-topTags(lrt.BvsL)
+# filtrar as amostras que são de "Endometrioid adenocarcinoma, NOS"
+dados_sem_nas = rna_seq_UCEC[,!is.na(rna_seq_UCEC$primary_diagnosis)]
+amostras_EA = dados_sem_nas$primary_diagnosis == "Endometrioid adenocarcinoma, NOS" 
+dados_EA = dados_sem_nas[,amostras_EA]
+dim(dados_EA)
 
 
-results <- as.data.frame(topTags(lrt.BvsL,n = Inf))
-results
-dim(results)
-summary(de <- decideTestsDGE(lrt.BvsL))
-
-
-detags <- rownames(dgeObj)[as.logical(de)]
-plotSmear(lrt.BvsL, de.tags=detags)
-
-signif <- -log10(results$FDR)
-plot(results$logFC,signif,pch=16)
-points(results[detags,"logFC"],-
-           log10(results[detags,"FDR"]),pch=16,col="red")
-
-
-var_genes <- apply(myCPM, 1, var)
-select_var <- names(sort(var_genes,
-                           decreasing=TRUE))[1:500]
-highly_variable_lcpm <- myCPM[select_var,]
-mypalette <- brewer.pal(11,"RdYlBu")
-morecols <- colorRampPalette(mypalette)
-col.cell <-  c("purple","orange")[gene_exp_filtrado$figo_stage]
-heatmap.2(highly_variable_lcpm,
-            col=rev(morecols(50)),
-            trace="column",
-            main="Top 500 most variable genes
-across samples",
-            ColSideColors=col.cell,scale="row")
-
-
-
-# filtragem dos dados da contagem de expressão de genes
-# filtrar as amostras dos dados de expressão acordo com o estádio FIGO 
-gene_exp_filtrado = rna_seq_UCEC[,!is.na(rna_seq_UCEC$vital_status)] 
+gene_exp_filtrado = dados_EA[,!is.na(dados_EA$vital_status)] 
 gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
-gene_exp_filtrado = rna_seq_UCEC[,!is.na(rna_seq_UCEC$figo_stage)] 
-gene_exp_filtrado$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", gene_exp_filtrado$figo_stage)
-gene_exp_filtrado$figo_stage = gsub(" ", "_", gene_exp_filtrado$figo_stage)
-gene_exp_filtrado$figo_stage = factor(gene_exp_filtrado$figo_stage) #  transformar o metadado para fator
-ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ figo_stage)
 ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
+dim(ddsSE)
 
-# filtrar o número de genes
-#avaliar se existe com valores omissos
-sum(is.na(gene_exp_filtrado)) #não existem valores omissos
+ddsSE = ddsSE[rowSums(counts(ddsSE)) > 0, ]
+dim(ddsSE)
 
-#https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
-# segundo a informação contida na documentação do package deseq2 a filtragem de genes com baixa expressão
-# mantendo os genes com mais de 10 counts em pelo menos 3 amostras
-
-# Encontrar genes com mais de 10 contagens e que aparecem em mais de 3 amostras
-genes_manter = rowSums(counts(ddsSE) > 30)
-genes_manter = genes_manter[genes_manter > 4]
-
-genes_manter <- rowSums(counts(ddsSE) >= 30) >= 5
-ddsSE <- ddsSE[genes_manter, ]
-
-
-
-# Filtrar o DESeqDataSet
+genes_manter = rowSums(counts(ddsSE) >= 10) >= 3
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
 
-
-# Teste de expressão diferencial, este package faz a normalização antes de proceder aos testes
-# explicar o método de normalização utilizado pelo DESeq2
-# 1. Extrair as contagens
-counts <- counts(ddsSE)
-
-# 2. Aplicar a transformação logarítmica (por exemplo, log2)
-counts_log <- round(log10(counts + 1))  # Adiciona 1 para evitar log(0)
-
-# 3. Substituir as contagens originais pelos valores transformados
-assay(ddsSE) <- counts_log
-
-
 ddsSE_norm = DESeq(ddsSE)
-ddsSE_vst <- vst(ddsSE_norm) #transformação de variância estabilizadora das counts pois uma análise inicial revelou elevado número de low reads
+resultados = results(ddsSE_norm, alpha = 0.05)
 
-
-resultados = results(ddsSE_norm)
 summary(resultados) # sumario dos resultados do teste de expressão diferencial
-sum(resultados$padj < 0.1, na.rm=TRUE) # número total de genes diferencialmente expressos
+sum(resultados$padj < 0.05, na.rm=TRUE) # número total de genes diferencialmente expressos
 
 
 DESeq2::plotMA(resultados, main="DESeq2") # visualização gráfica dos resultados, pontos azuis genes DE
 
+plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="vital_status", pch = 19)
 
-# Análise dos resultados da expressão diferencial
+
+vsd <- varianceStabilizingTransformation(ddsSE_norm, blind = FALSE)
+select = rownames(head(resOrdered,20))
+vsd.counts = assay(vsd)[select,]
+df = colData(ddsSE_norm)
+df = df[,c("bar_code","vital_status")]
+df = as.data.frame(colData(ddsSE_norm)[,"vital_status"])
+pheatmap(vsd.counts, cluster_rows=FALSE,show_colnames = F, annotation_col =df)
 
 
-# análise individual do gene mais diferencialmente expresso
-plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="figo_stage", pch = 19, col=1:4)
-#NOTA: a normalização pode ser realizada com o package deseq2 e com a função normalization
-#NOTA: o edger pode fazer outro processo de normalização através da função rpkm 
-#(tem que se fazer a normalização ou antes ou depois da analise diferencial)
