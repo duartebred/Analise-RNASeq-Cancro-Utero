@@ -158,9 +158,6 @@ gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
 ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
 dim(ddsSE)
 
-ddsSE = ddsSE[rowSums(counts(ddsSE)) > 0, ]
-dim(ddsSE)
-
 genes_manter = rowSums(counts(ddsSE) >= 10) >= 3
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
