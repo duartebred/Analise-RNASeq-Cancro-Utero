@@ -19,6 +19,11 @@ library(DESeq2)
 library(edgeR)
 library(RColorBrewer)
 library(gplots)
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+library(ggplot2)
+library(tidyverse)
+library(fgsea)
 
 
 # Realização de uma consulta ao Genomic Data Commons (GDC) para obter os dados de expressão referentes ao projeto em estudo
@@ -36,7 +41,7 @@ rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = TRUE, save.filename 
 
 
 #loading dos dados a partir dos ficheiros criados no GDCprepare
-rna_seq_UCEC= get(load("C:/Users/ricar/Downloads/mRNA_TCGA-UCEC.rda"))
+rna_seq_UCEC= get(load("C:/Users/Utilizador/Desktop/Universidade/Bioinformática 1º ano/2º Semestre/Extração de Conhecimento de Dados Biológicos/Enunciado do trabalho 1/mRNA_TCGA-UCEC.rda"))
 
 
 # analise da estrutura dos dados descarregados
@@ -158,6 +163,9 @@ gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
 ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
 dim(ddsSE)
 
+ddsSE = ddsSE[rowSums(counts(ddsSE)) > 0, ]
+dim(ddsSE)
+
 genes_manter = rowSums(counts(ddsSE) >= 10) >= 3
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
@@ -181,5 +189,55 @@ df = colData(ddsSE_norm)
 df = df[,c("bar_code","vital_status")]
 df = as.data.frame(colData(ddsSE_norm)[,"vital_status"])
 pheatmap(vsd.counts, cluster_rows=FALSE,show_colnames = F, annotation_col =df)
+
+
+#Enriquecimento
+get_entrez <- function(x) {
+  unlist(strsplit(x, split="[.]+"))[2]
+}
+#Busca anotações de genes e exibe as primeiras linhas do objeto
+ann <- AnnotationDbi::select(
+  org.Hs.eg.db, 
+  keys = sapply(rownames(resultados), get_entrez), 
+  columns = c("ENTREZID", "SYMBOL", "GENENAME"))
+head(ann)
+
+
+# Combina os resultados da expressão diferencial com as anotações de genes
+all_results.annotated <- cbind(as.data.frame(resultados), ann)
+head(all_results.annotated)
+
+
+# Ordena os resultados pela alteração na expressão em ordem decrescente
+results.ord <- all_results.annotated[order(-all_results.annotated[,"log2FoldChange"]), ]
+# Prepara os rankings para a FGSEA
+ranks <- results.ord$log2FoldChange
+names(ranks) <- results.ord$ENTREZID
+
+
+pathways <- gmtPathways("C:/Users/Utilizador/Desktop/Universidade/Bioinformática 1º ano/2º Semestre/Extração de Conhecimento de Dados Biológicos/Enunciado do trabalho 1/h.all.v2023.2.Hs.entrez.gmt")
+
+
+# Executa a FGSEA
+fgseaRes <- fgsea(pathways, 
+                  stats = vetor,
+                  scoreType = 'std',
+                  minSize = 10, 
+                  maxSize = 1000)
+
+
+class(fgseaRes)
+dim(fgseaRes) 
+
+
+# Mostra as primeiras entradas ordenadas pelo p-valor ajustado
+head(fgseaRes[order(fgseaRes$padj), ])
+
+
+# Cria um gráfico de barras dos resultados da FGSEA
+ggplot(fgseaRes, aes(reorder(pathway, NES), NES)) +
+  geom_col(aes(fill=padj<0.05)) +
+  coord_flip() +
+  labs(x="Pathway", y="Normalized Enrichment Score", title="Hallmark pathways NES from GSEA")
 
 
