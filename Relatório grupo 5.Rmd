@@ -354,7 +354,7 @@ Numa primeira fase realizou-se a filtragem das amostras que são descritas nos m
 
 Embora se tenha realizada uma filtragem ao nível das amostras, uma vez que o dataset possui cerca de 61 mil genes analisados, é importante que se realiza uma filtragem de modo a remover genes que apresentam expressão ausente, isto é, genes que não possuem nenhuma amostra com expressão. Além disso, é também interessante remover genes que possuem uma baixo nível de expressão, uma vez que estes genes não permitem retirar informações relevantes acerca da expressão diferencial.
 Para isso eliminou-se do dataset todos aqueles genes que não possuíam pelo menos 20 counts em pelo menos 4 amostras, sendo que estes parâmetros são considerados standard, segundo o workflow apresentado na documentação do [DESeq2] https://shorturl.at/nyLT0.
-Após a etapa do pre-processamento, o dataset final apresenta cerca de 28 mil genes e 423 amostras.
+Após a etapa do pre-processamento, o dataset final apresenta cerca de 28 mil genes e 423 amostras e, com o dataset filtrado, realizou-se a criação do objeto DESeqDataSet, em que se utilizou o fator "vital_status" como uma variável explicativa do modelo.
 
 ```{r}
 dados_sem_nas = rna_seq_UCEC[,!is.na(rna_seq_UCEC$primary_diagnosis)]
@@ -370,13 +370,35 @@ genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
 
+ddsSE_norm = DESeq(ddsSE)
+resultados = results(ddsSE_norm, alpha = 0.05)
+
+
+summary(resultados) # sumario dos resultados do teste de expressão diferencial
+sum(resultados$padj < 0.05, na.rm=TRUE)
+
 ```
 
-Em seguida procedeu-se à utilização da função DESeq() para realizar os testes de expressão diferencial. Esta função 
+
+Em seguida procedeu-se à utilização da função DESeq() para realizar os testes de expressão diferencial. Esta função realiza 4 etapas essências para garantir a robustez dos testes realizados.
+A primeira etapa corresponde à estimativa de fatores de tamanho para cada amostra, sendo estes utilizados para normalizar as contagens de expressão genética, tendo em consideração as diferenças nas profundidades de sequenciamento entre as amostras, sendo essencial para remover enviesamento técnicos.
+Posteriormente, a função realiza a estimativa das dispersões que corresponde às variações biológica e técnica dos dados de expressão genética.
+Após a estimativa dos valores de dispersão, o modelo estatísticos é ajustado aos dados, com o intuito de se testar a expressão diferencial para o modelo criado no objeto DESeqDataSet, sendo que o teste padrão utilizado pela ferramenta é o test Wald, no entanto pode-se utiliar o teste de log-verossimilhança (LRT).
+Por fim, a função deteta e substitui outliers, isto é, genes com contagens muito altas ou muito baixas em comparação com a previsão do modelo, de modo a melhorar a robustez dos resultados
+
+Dos resultados obtidos dos testes de expressão diferencial, optamos por considerar um valor de erro de 5%, resultando que apenas os genes que possuem um valor de "padjust" inferior a 5% são considerados como diferencialmente expressos
+Segundo a sumarização dos resultados, nas condições estabelecidas, foram indentificados no total 3431 genes, sendo que desses {} se encontram sobreexpressos e os restantes subexpressos.
+
+```{r}
+
+DESeq2::plotMA(resultados, main="Expressão diferencial em função do estado vital") # visualização gráfica dos resultados, pontos azuis genes DE
+
+```
 
 
-Através do package DESeq2 procedemos à realização do teste de expressão diferencial (... falar da normalização).
-Ao aplicarmos o comando summary() aos resultados da expressão diferencial obtemos a informação de que estão a ser diferencialmente expressos um total de 3431 genes, sendo que cerca de 8.4% estão a ser sobre-expressos e cerca de 4.1% estão a ser subexpressos. Graficamente, através do MA plot, conseguimos visualizar essa diferença na expressão dos genes, sendo que os pontos a azul correspondem aos genes diferencialmente expressos e os pontos a cinza correspondem a outros genes. Para os genes sobre-expressos temos então uma condição em que esses genes estão mais expressos na condição "Dead" do que na condição "Alive" e para os genes sub-expressos temos o inverso, ou seja, os genes em questão estão sub-expressos na condição "Alive".
+A visualização dos resultados a nível gráfico
+
+Graficamente, através do MA plot, conseguimos visualizar essa diferença na expressão dos genes, sendo que os pontos a azul correspondem aos genes diferencialmente expressos e os pontos a cinza correspondem a outros genes. Para os genes sobre-expressos temos então uma condição em que esses genes estão mais expressos na condição "Dead" do que na condição "Alive" e para os genes sub-expressos temos o inverso, ou seja, os genes em questão estão sub-expressos na condição "Alive".
 Através da função plotCounts() fizemos a análise de expressão diferencial de um dos genes mais diferencialmente expressos, e podemos retirar as seguintes conclusões: a expressão desse gene
 
 
