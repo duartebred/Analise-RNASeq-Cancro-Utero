@@ -4,12 +4,13 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 if (!requireNamespace("TCGAbiolinks", quietly = TRUE))
   BiocManager::install("TCGAbiolinks")
 BiocManager::install("SummarizedExperiment", dependencies = TRUE)
-
+BiocManager::install("DESeq2")
 
 #carregar os pacotes na sessão atual do R
 library(BiocManager)
 library(TCGAbiolinks)
 library(SummarizedExperiment)
+library(DESeq2)
 
 
 # Realização de uma consulta ao Genomic Data Commons (GDC) para obter os dados de expressão referentes ao projeto em estudo
@@ -52,7 +53,7 @@ colnames(amostras_metadados)
 
 
 # Extração da informação relacionada à contagem da expressão dos genes do objeto rna_seq_UCEC
-geneExp <- SummarizedExperiment::assay(rna_seq_UCEC)
+geneExp = SummarizedExperiment::assay(rna_seq_UCEC)
 
 
 # Metadados das amostras
@@ -73,7 +74,7 @@ amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras
 # vital_status
 tabela_vital = prop.table(table(amostras_meta_reduzido$vital_status, useNA = "ifany")) *100
 barplot(tabela_vital, names.arg= c("Alive","Dead","NAs"), col= "lightblue", ylab="Percentagem",
-        main="Distribuição de Vitalidade dos Pacientes")
+        main="Distribuição do estado vital dos Pacientes")
 
 
 # primary_diagnosis
@@ -90,110 +91,104 @@ pie(primary_comprimido, labels = paste(labels_primary, sprintf("%.1f%%", primary
 tabela_figo = prop.table(table(amostras_meta_reduzido$figo_stage,  useNA = "ifany")) *100
 labels_figo = c("Stage I", "Stage II", "Stage III", "Stage IV", "NAs")
 pie(tabela_figo, labels = paste(labels_figo, sprintf("%.1f%%", tabela_figo)), col=c('lightblue','lightgreen',
-    'yellow','lightpink','orchid'), main= "Distribuição de Estágios de cancro Ginecológico (FIGO)")
+    'yellow','lightpink','orchid'), main= "Distribuição de estádios de cancro Ginecológico (FIGO)")
 
 
 # age_at_index
 idade_pacientes = amostras_meta_reduzido$age_at_index
 summary(idade_pacientes)
-par(mfrow = c(2, 1))
-boxplot(idade_pacientes,horizontal=T, col = "purple", main='Histograma da idade dos pacientes')
-hist(idade_pacientes, xlab = 'Idade dos Pacientes', ylab = 'Frequência', main = 'Histograma da Idade dos Pacientes',
+boxplot(idade_pacientes,horizontal=T, col = "purple", main='Histograma da idade dos pacientes',)
+hist(idade_pacientes, xlab = 'Idade dos Pacientes', ylab = 'Frequência', main = 'Distribuição da Idade dos Pacientes',
      col='lightblue')
 
 
-# criar vetor logica em que diz que linhas é que possuem grade diferente de na
-coluna=!is.na(meta_UCEC$paper_tumor_grade) 
+# eliminação das linhas que possuem NAs
+metados_sem_nas = na.omit(as.data.frame(amostras_meta_reduzido))
+dim(metados_sem_nas) # passamos de 589 para 574
 
 
-# seleciona apenas as linhas que tem grade
-meta=meta_UCEC[coluna,c("paper_tumor_grade","paper_age","disease_type")] 
-meta$disease_type
-table(meta_UCEC[rownames(meta),"paper_tumor_grade"]) # confirmar que os pacientes selecionados tem um valor de grade atribuido na tabela de metadados original
-head(meta)
-
-summary(meta$paper_age)
-boxplot(meta$paper_age,horizontal=T)
-
-anova=aov(meta$paper_age~meta$paper_tumor_grade)
-summary(anova)
-
-TukeyHSD(anova)
-
-boxplot(meta$paper_age~meta$paper_tumor_grade,horizontal=T)
-#verificaçáo da dimensão do dataframe meta após selação de apenas as linhas com informação relativa ao grade
-sum(table(meta_UCEC$paper_tumor_grade))
-dim(meta)
+# teste de hipótese
+#idade dos pacientes em função do estádio FIGO
+boxplot(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage, horizontal = T,
+        xlab="Idade do paciente", ylab="Estádio FIGO", main= "Idade do Paciente por Estádio FIGO",
+        col=c("lightcoral","indianred","tomato",'red')) #verificação visual dos vários grupos
 
 
-#criação do data frame de expressão apenas para os pacientes com informação relativa ao grade
-exp_grade=geneExp[,rownames(meta)]
-dim(exp_grade)
+shapiro.test(metados_sem_nas$age_at_index) # teste à normalidade dos dados
+qqnorm(metados_sem_nas$age_at_index) # visualização da normalidade através do gráfico qqplot
+qqline(metados_sem_nas$age_at_index)
+
+aov_FIGO = aov(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage); summary(anova_one_way)
+boxplot(aov_FIGO$residuals, horizontal = T ) # verificação da homogeneidade das variâncias
+t.test(aov_FIGO$residuals, mu=0) # verificação da homogeneidade das variâncias
+
+kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage) # teste não parametrico
 
 
+#idade dos pacientes em função do estado vital
+boxplot(metados_sem_nas$age_at_index~metados_sem_nas$vital_status, horizontal = T,
+        xlab="Idade do paciente", ylab="Estado Vital", main= "Idade do Paciente por Estado Vital",
+        col=c("lightgreen","gray"))
+# a idade continua a não possuir distribuição normal
 
-row.names(meta_UCEC[,"paper_tumor_grade"])
-select=meta_UCEC$paper_tumor_grade
-row_names=rownames(select)
+aov_estado_vital = aov(metados_sem_nas$age_at_index~metados_sem_nas$vital_status); summary(anova_one_way)
+boxplot(aov_estado_vital$residuals, horizontal = T ) # verificação da homogeneidade das variâncias
+t.test(aov_estado_vital$residuals, mu=0) # verificação da homogeneidade das variâncias
 
-#nomes das linhas
-names(meta_UCEC)
-#extrair componentes de um objeto por nome (através de colunas)
-meta_UCEC$patient
-meta_UCEC$paper_vital_status
-
-# Extrair apenas a palavra "Stage" e os números romanos
-figo_stage <- gsub(".*\\b(Stage [VI]+).*", "\\1", metadata_matriz_clean$figo_stage)
+kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$vital_status) # teste não parametrico
 
 
-# Visualizar o resultado
-print(metadata_matriz_clean$figo_stage)
+# filtragem dos dados da contagem de expressão de genes
+# filtrar as amostras dos dados de expressão acordo com o estádio FIGO 
+colunas=!is.na(amostras_meta_reduzido$figo_stage)
+amostras= amostras_meta_reduzido[colunas,]
+# substituição dos espaços nos metadados por "_"
+amostras$figo_stage = gsub(" ", "_", amostras$figo_stage)
+amostras$figo_stage = factor(amostras$figo_stage) # transformar a variável de caracter para fator
+
+dim(amostras)
+
+gene_exp_filtrado = geneExp[,rownames(amostras)]
+
+# filtrar o número de genes
+#avaliar se existe com valores omissos
+sum(is.na(gene_exp_filtrado)) #não existem valores omissos
+
+de_seq_data_set = DESeqDataSetFromMatrix(countData = gene_exp_filtrado,
+                              colData = amostras[,-c(2)],
+                              design = ~ figo_stage)
+
+#https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+# segundo a informação contida na documentação do package deseq2 a filtragem de genes com baixa expressão
+# mantendo os genes com mais de 10 counts em pelo menos 3 amostras
+
+# Encontrar genes com mais de 10 contagens e que aparecem em mais de 3 amostras
+genes_manter = rowSums(counts(de_seq_data_set) > 10)
+genes_manter = genes_manter[genes_manter > 3]
+
+# Filtrar o DESeqDataSet
+de_seq_data_set_filtrado = de_seq_data_set[genes_manter, ]
+dim(de_seq_data_set_filtrado)
 
 
-#código utilizado para extrair a informação relacionada à contagem da expressão dos genes do objeto rna_seq_UCEC
-geneExp <- SummarizedExperiment::assay(rna_seq_UCEC)
+# Teste de expressão diferencial, este package faz a normalização antes de proceder aos testes
+# explicar o método de normalização utilizado pelo DESeq2
+de_seq_data_set_filtrado_norm = DESeq(de_seq_data_set_filtrado)
+colnames(de_seq_data_set)
+
+resultados = results(de_seq_data_set_filtrado_norm)
+summary(resultados) # sumario dos resultados do teste de expressão diferencial
+sum(resultados$padj < 0.1, na.rm=TRUE) # número total de genes diferencialmente expressos
 
 
+DESeq2::plotMA(resultados, main="DESeq2") # visualização gráfica dos resultados, pontos azuis genes DE
 
 
+# Análise dos resultados da expressão diferencial
 
 
-
-##########
-
-#Análise de Expressão Diferencial com DESeq2
-library(DESeq2)  #Nota: pacote DESeq2, uma ferramenta para análise de expressão diferencial de dados de contagem de sequenciamento de RNA (RNA-Seq)
-
-#Filtra os dados de RNA para incluir apenas amostras não nulo
-data_de <- rna_seq_UCEC[,!is.na(rna_seq_UCEC$paper_vital_status)]
-
-#Cria um objeto DESeqDataSet para análise, especificando um design experimental 
-#que compara o status de IDH
-ddsSE <- DESeqDataSet(data_de, design = ~ paper_vital_status)
-
-#Filtragem de Genes: Remove genes com contagens baixas (menos de 10) 
-#para melhorar a confiabilidade da análise de expressão diferencial.
-keep <- rowSums(counts(ddsSE)) >= 10
-
-#Executa a análise de expressão diferencial com a função DESeq
-ddsSE <- ddsSE[keep,]
-ddsSE <- DESeq(ddsSE)
-
-resultsNames(ddsSE)
-#comparação "WT vs Mutant" para o status do IDH, e converte os resultados para um dataframe
-res <- results(ddsSE, name = "paper_IDH.status_WT_vs_Mutant")
-dea <- as.data.frame(res)
-#resume os resultados para obter uma visão geral dos achados estatísticos, 
-#como o número de genes significativamente diferencialmente expressos
-summary(res)
-
-
-
-#para ver os outliers - no nosso caso é zero
-pre = TCGAanalyze_Preprocessing(rna_seq_UCEC) #faz correlação e tenta identificar outliers
-dim(geneExp)
-dim(pre)
-
+# análise individual do gene mais diferencialmente expresso
+plotCounts(de_seq_data_set_filtrado_norm, gene=which.min(resultados$padj), intgroup="figo_stage", pch = 19, col= figo_stage)
 #NOTA: a normalização pode ser realizada com o package deseq2 e com a função normalization
 #NOTA: o edger pode fazer outro processo de normalização através da função rpkm 
 #(tem que se fazer a normalização ou antes ou depois da analise diferencial)
