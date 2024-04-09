@@ -399,6 +399,7 @@ DESeq2::plotMA(resultados, main="Expressão diferencial em função do estado vi
 
 A visualização dos resultados é possível através do MA plot. No gráfico, os pontos representados a azul correspondem aos genes que são diferencialmente expressos sendo que, os pontos que se encontram em valores positivos de "log fold change" correspondem aos genes que são sobrexpressos para a condição "Dead" enquanto que os pontos localizados para valores negativos identificam os genes que são subexpressos na condição "Dead" e por isso são considerados sobrexpressos na condição "Alive". Pela densidade dos pontos azuis e possível concluir que grande parte dos genes diferencialmente expressos estão sobreexpressos na condição alive.
 Por outro lado, os pontos a cinza representam os genes que não são diferencialmente expressos, e por este gráfico conclui-se que grande parte dos genes em estudo não sofrem variações estatisticamente significativas para serem considerados diferenciais.
+É ainda possível verificar que uma grande dispersão dos pontos azuis, sobretudo para os genes de baixa expressão sugerindo que existe uma variabilidade considerável na expressão diferencial.
 Embora o gráfico forneça uma visão geral da expressão diferencial para a condição em estudo, é necessário avaliar os genes de forma mais detalhada de modo a determinar a sua função biológica e a relevância para o estudo em questão.
 
 
