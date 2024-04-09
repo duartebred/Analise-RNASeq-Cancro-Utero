@@ -312,14 +312,14 @@ Ainda assim, procedemos à realização do teste não paramétrico **kruskal.tes
 ```{r}
 kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage) # teste não parametrico
 ```
-
-No que diz respeito ao estado de sobrevivência dos pacientes, vital_status, visualmente é transmitida a ideia de que os pacientes que já faleceram tinham uma idade mais avançada. Através do teste anova one way,para as hipóteses definidas como:
 <div style="text-align: center;">
+No que diz respeito ao estado de sobrevivência dos pacientes, vital_status, visualmente é transmitida a ideia de que os pacientes que já faleceram tinham uma idade mais avançada. Através do teste anova one way,para as hipóteses definidas como:
+
 H0: Não existem diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida.
 H1: Existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida.
-</div>
-verificamos que a hipótese nula é rejeitada ( p value= 6.13e-05), ou seja, existem diferenças estatisticamente significativas entre a idade dos pacientes nos diferentes grupos "Alive" e "Dead".
 
+verificamos que a hipótese nula é rejeitada ( p value= 6.13e-05), ou seja, existem diferenças estatisticamente significativas entre a idade dos pacientes nos diferentes grupos "Alive" e "Dead".
+</div>
 ```{r, echo=FALSE}
 #idade dos pacientes em função do estado vital
 # Teste de Bartlett para verificar homogeneidade das variâncias
@@ -346,8 +346,47 @@ Realizamos também para este caso o teste não paramétrico kruskal.test() e obt
 ```{r, echo=FALSE}
 kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$vital_status) # teste não parametrico
 ```
+
 ### **3.Análise de expressão diferencial e enriquecimento**
 
+Com o intuito de proceder à análise dos genes que se encontram diferencialmente expressos no tumor "Endometrioid adenocarcinoma, NOS"  em função do estado vital do paciente em estudo procedeu-se ao pre-processamento dos dados de modo a facilitar e otimizar a análise diferencial reduzindo o tempo e os recursos computacionais necessários.
+Numa primeira fase realizou-se a filtragem das amostras que são descritas nos metadados como tendo diagnóstico primário de Endometrioid adenocarcinoma, NOS, já que apenas estas amostras representam relevância para este estudo. Em seguida, avaliou-se a eventual presença de valores omissos ao nível da coluna do estado vital e, uma vez que não existem valores omissos, transformou-se o metadado "vital_status" em fator, visto que a análise de expressão diferencial realizada pelo package DESeq2 recomenda a utilização de fatores ao invés de caracteres.
+
+Embora se tenha realizada uma filtragem ao nível das amostras, uma vez que o dataset possui cerca de 61 mil genes analisados, é importante que se realiza uma filtragem de modo a remover genes que apresentam expressão ausente, isto é, genes que não possuem nenhuma amostra com expressão. Além disso, é também interessante remover genes que possuem uma baixo nível de expressão, uma vez que estes genes não permitem retirar informações relevantes acerca da expressão diferencial.
+Para isso eliminou-se do dataset todos aqueles genes que não possuíam pelo menos 20 counts em pelo menos 4 amostras, sendo que estes parâmetros são considerados standard, segundo o workflow apresentado na documentação do [DESeq2] https://shorturl.at/nyLT0.
+Após a etapa do pre-processamento, o dataset final apresenta cerca de 28 mil genes e 423 amostras.
+
+```{r}
+dados_sem_nas = rna_seq_UCEC[,!is.na(rna_seq_UCEC$primary_diagnosis)]
+amostras_EA = dados_sem_nas$primary_diagnosis == "Endometrioid adenocarcinoma, NOS" 
+dados_EA = dados_sem_nas[,amostras_EA]
+
+sum(is.na(dados_EA$vital_status))
+gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
+ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
+
+
+genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
+ddsSE = ddsSE[genes_manter, ]
+dim(ddsSE)
+
+```
+
+Em seguida procedeu-se à utilização da função DESeq() para realizar os testes de expressão diferencial. Esta função 
+
+
+Através do package DESeq2 procedemos à realização do teste de expressão diferencial (... falar da normalização).
+Ao aplicarmos o comando summary() aos resultados da expressão diferencial obtemos a informação de que estão a ser diferencialmente expressos um total de 3431 genes, sendo que cerca de 8.4% estão a ser sobre-expressos e cerca de 4.1% estão a ser subexpressos. Graficamente, através do MA plot, conseguimos visualizar essa diferença na expressão dos genes, sendo que os pontos a azul correspondem aos genes diferencialmente expressos e os pontos a cinza correspondem a outros genes. Para os genes sobre-expressos temos então uma condição em que esses genes estão mais expressos na condição "Dead" do que na condição "Alive" e para os genes sub-expressos temos o inverso, ou seja, os genes em questão estão sub-expressos na condição "Alive".
+Através da função plotCounts() fizemos a análise de expressão diferencial de um dos genes mais diferencialmente expressos, e podemos retirar as seguintes conclusões: a expressão desse gene
+
+
+
+```{r}
+
+ddsSE_norm = DESeq(ddsSE)
+resultados = results(ddsSE_norm, alpha = 0.05)
+
+```
 
 ### Bibliografia
 
