@@ -387,7 +387,8 @@ Após a estimativa dos valores de dispersão, o modelo estatísticos é ajustado
 Por fim, a função deteta e substitui outliers, isto é, genes com contagens muito altas ou muito baixas em comparação com a previsão do modelo, de modo a melhorar a robustez dos resultados
 
 Dos resultados obtidos dos testes de expressão diferencial, optamos por considerar um valor de erro de 5%, resultando que apenas os genes que possuem um valor de "padjust" inferior a 5% são considerados como diferencialmente expressos
-Segundo a sumarização dos resultados, nas condições estabelecidas, foram indentificados no total 3431 genes, sendo que desses {} se encontram sobreexpressos e os restantes subexpressos.
+Segundo a sumarização dos resultados, nas condições estabelecidas, foram indentificados no total 3431 genes, sendo que desses 2308 se encontram sobreexpressos e os restantes subexpressos.
+Os resultados contem 6 colunas. A colua baseMean representa a média normalizada das contagens para todas as amostras. A coluna log2FoldChange que avalia a difrença da expressão em logaritmo de base 2 entre os dois grupos comparados neste caso "Alive" e "Dead". Por fim o valor de pvalue que representa a probabilidade de o valor de log fold changes calculado ser resultado do acaso.
 
 ```{r}
 
@@ -396,19 +397,23 @@ DESeq2::plotMA(resultados, main="Expressão diferencial em função do estado vi
 ```
 
 
-A visualização dos resultados a nível gráfico
-
-Graficamente, através do MA plot, conseguimos visualizar essa diferença na expressão dos genes, sendo que os pontos a azul correspondem aos genes diferencialmente expressos e os pontos a cinza correspondem a outros genes. Para os genes sobre-expressos temos então uma condição em que esses genes estão mais expressos na condição "Dead" do que na condição "Alive" e para os genes sub-expressos temos o inverso, ou seja, os genes em questão estão sub-expressos na condição "Alive".
-Através da função plotCounts() fizemos a análise de expressão diferencial de um dos genes mais diferencialmente expressos, e podemos retirar as seguintes conclusões: a expressão desse gene
-
+A visualização dos resultados é possível através do MA plot. No gráfico, os pontos representados a azul correspondem aos genes que são diferencialmente expressos sendo que, os pontos que se encontram em valores positivos de "log fold change" correspondem aos genes que são sobrexpressos para a condição "Dead" enquanto que os pontos localizados para valores negativos identificam os genes que são subexpressos na condição "Dead" e por isso são considerados sobrexpressos na condição "Alive". Pela densidade dos pontos azuis e possível concluir que grande parte dos genes diferencialmente expressos estão sobreexpressos na condição alive.
+Por outro lado, os pontos a cinza representam os genes que não são diferencialmente expressos, e por este gráfico conclui-se que grande parte dos genes em estudo não sofrem variações estatisticamente significativas para serem considerados diferenciais.
+Embora o gráfico forneça uma visão geral da expressão diferencial para a condição em estudo, é necessário avaliar os genes de forma mais detalhada de modo a determinar a sua função biológica e a relevância para o estudo em questão.
 
 
 ```{r}
 
-ddsSE_norm = DESeq(ddsSE)
-resultados = results(ddsSE_norm, alpha = 0.05)
+plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="vital_status", pch = 19)
 
+resOrdered = resultados[order(resultados$padj),]
+resOrdered[1,]
 ```
+
+Em seguida, optou-se por analisar o comportamento de um gene indivual, tendo se escolhido o gene que apresenta o menor valor de padjust indicando que será o gene que mais se encontra diferencialmente expresso. Pela análise do gráfico, verifica-se que o grupo "alive" possui menor variação na contagem normalizada do que o grupo "dead", o que leva a que a média do grupo "Dead" seja superior à média do grupo "Alive". Esta informação é corroborada pelas estatísticas produzidas para este gene em que o valor de log2FoldChange, por ser positivo indica que a classe Dead se encontra sobreexpressa, no entanto no gráfico essa conclusão fica dificultada e, para além disso, ambas as classes paracem apresentar o mesmo comportamento. Tal como observado no gráfico MA plot, este gene apresenta níveis de expressão baixos o que faz com que a variabilidade da expressão seja fortemente afetada por pequnas variações na contagem. Em adição, este "falso positivo", pode também ser resultado do facto de  que  cerca de 80% das amostras analisadas correspondem ao estado vivo enquanto que apenas 16% ao estado morto, levando a que a media das contagens para o estado morto seja, também, mais influenciada pela variação das contagens.
+Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que, atualmente, não existem evidências científicas que comprovem que o gene ELAVL4 (ENSG00000162374.18), possua impacto direto na progessão do estadio do cancro, na formação de metasteses ou com a gravidade do tumor, sendo que, para o tumor endometrial, ainda não existem estudos que incidam sobre este gene, reforçando portanto que o facto deste gene ser considerado diferencialmente expresso pode ser o resultado de limitações técninas e não pelo impacto biológico que este gene apresenta nas amostras analisadas sendo necessários estudos posteriores.
+
+
 
 ### Bibliografia
 
