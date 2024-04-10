@@ -24,6 +24,7 @@ library(org.Hs.eg.db)
 library(ggplot2)
 library(tidyverse)
 library(fgsea)
+library(pheatmap)
 
 
 # Realização de uma consulta ao Genomic Data Commons (GDC) para obter os dados de expressão referentes ao projeto em estudo
@@ -36,8 +37,8 @@ query_TCGA_UCEC <- GDCquery(
 
 
 # Download e preparação dos dados com base na query
-GDCdownload(query=query_TCGA_UCEC)
-rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
+GDCdownload(query=query_TCGA_UCEC, method = "api")
+rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = FALSE)
 
 
 #loading dos dados a partir dos ficheiros criados no GDCprepare
@@ -66,7 +67,8 @@ colnames(amostras_metadados)
 
 
 # Extração da informação relacionada à contagem da expressão dos genes do objeto rna_seq_UCEC
-geneExp = SummarizedExperiment::assay(rna_seq_UCEC)
+geneExp = SummarizedExperiment::assay(rna_seq_UCEC, "unstranded")
+
 
 
 # Metadados das amostras
@@ -85,7 +87,7 @@ amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras
 
 # Análise exploratória dos metadados
 #descrição das colunas dos metadados selecionadas
-table((amostras_meta_reduzido$vital_status)
+table(amostras_meta_reduzido$vital_status)
 table(is.na(amostras_meta_reduzido$vital_status))
 table(amostras_meta_reduzido$primary_diagnosis)
 table(is.na(amostras_meta_reduzido$primary_diagnosis))
@@ -174,21 +176,20 @@ kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$vital_status) # teste 
 
 
 # filtrar as amostras que são de "Endometrioid adenocarcinoma, NOS"
-dados_sem_nas = rna_seq_UCEC[,!is.na(rna_seq_UCEC$primary_diagnosis)]
-amostras_EA = dados_sem_nas$primary_diagnosis == "Endometrioid adenocarcinoma, NOS" 
-dados_EA = dados_sem_nas[,amostras_EA]
+amostras_filtradas = amostras_metadados[!is.na(amostras_metadados$primary_diagnosis),]
+amostras_filtradas = amostras_filtradas[amostras_filtradas$primary_diagnosis =="Endometrioid adenocarcinoma, NOS",]
+dados_EA = geneExp[,rownames(amostras_filtradas)]
 dim(dados_EA)
 
+sum(is.na(amostras_filtradas$vital_status))
+amostras_filtradas$vital_status = factor(amostras_filtradas$vital_status)
 
-gene_exp_filtrado = dados_EA[,!is.na(dados_EA$vital_status)] 
-gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
+ddsSE = DESeqDataSetFromMatrix(countData = dados_EA, colData = amostras_filtradas, design = ~vital_status)
 ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
 dim(ddsSE)
 
-ddsSE = ddsSE[rowSums(counts(ddsSE)) > 0, ]
-dim(ddsSE)
 
-genes_manter = rowSums(counts(ddsSE) >= 10) >= 3
+genes_manter = rowSums(counts(ddsSE) >= 15) >= 3
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
 
@@ -201,16 +202,16 @@ sum(resultados$padj < 0.05, na.rm=TRUE) # número total de genes diferencialment
 
 DESeq2::plotMA(resultados, main="DESeq2") # visualização gráfica dos resultados, pontos azuis genes DE
 
-plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="vital_status", pch = 19)
+plotCounts(ddsSE_norm, gene=10, intgroup="vital_status", pch = 19)
 
 # heatmap
 vsd <- varianceStabilizingTransformation(ddsSE_norm, blind = FALSE)
+resOrdered[1,]
+resOrdered = resultados[order(resultados$padj),]
 select = rownames(head(resOrdered,20))
 vsd.counts = assay(vsd)[select,]
-df = colData(ddsSE_norm)
-df = df[,c("bar_code","vital_status")]
-df = as.data.frame(colData(ddsSE_norm)[,"vital_status"])
-pheatmap(vsd.counts, cluster_rows=FALSE,show_colnames = F, annotation_col =df)
+df = as.data.frame(colData(rna_seq_UCEC)[,"vital_status"])
+pheatmap(vsd.counts, cluster_rows=TRUE,show_colnames = F)
 
 
 #Enriquecimento
