@@ -38,7 +38,7 @@ query_TCGA_UCEC <- GDCquery(
 
 # Download e preparação dos dados com base na query
 GDCdownload(query=query_TCGA_UCEC, method = "api")
-rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = FALSE)
+rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
 
 
 #loading dos dados a partir dos ficheiros criados no GDCprepare
@@ -185,10 +185,10 @@ sum(is.na(amostras_filtradas$vital_status))
 amostras_filtradas$vital_status = factor(amostras_filtradas$vital_status)
 
 ddsSE = DESeqDataSetFromMatrix(countData = dados_EA, colData = amostras_filtradas, design = ~vital_status)
-ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
 dim(ddsSE)
 
 
+# filtragem de genes com menos de 15 ocorrências em pelo menos 3 amostras
 genes_manter = rowSums(counts(ddsSE) >= 15) >= 3
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
@@ -200,9 +200,10 @@ summary(resultados) # sumario dos resultados do teste de expressão diferencial
 sum(resultados$padj < 0.05, na.rm=TRUE) # número total de genes diferencialmente expressos
 
 
-DESeq2::plotMA(resultados, main="DESeq2") # visualização gráfica dos resultados, pontos azuis genes DE
+# visualização gráfica dos resultados
+DESeq2::plotMA(resultados, main="Análise de expressão diferencial DESeq2")
+plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="vital_status", pch = 19)
 
-plotCounts(ddsSE_norm, gene=10, intgroup="vital_status", pch = 19)
 
 # heatmap
 vsd <- varianceStabilizingTransformation(ddsSE_norm, blind = FALSE)
@@ -213,6 +214,78 @@ vsd.counts = assay(vsd)[select,]
 df = as.data.frame(colData(rna_seq_UCEC)[,"vital_status"])
 pheatmap(vsd.counts, cluster_rows=TRUE,show_colnames = F)
 
+
+# análise expressão diferencial através do edgeR (https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf)
+#Pre processamento, normalização contagens por milhão e filtragem de genes com baixa expressão ou expressão nula
+
+# normalização dos dados das contagens
+dados_EA_CPM = cpm(dados_EA)
+dim(dados_EA_CPM)
+
+# remoção dos genes que não possuem expressão de 0.5 ou superior em pelo menos 2 amostras 
+min_exp = dados_EA_CPM > 0.5
+keep_rows =  rowSums(min_exp) >= 2
+dados_EA_CPM_filt = dados_EA_CPM[keep_rows,]
+dim(dados_EA_CPM_filt)
+
+
+# transformação das contagens normalizadas
+dgeObj = DGEList(dados_EA_CPM_filt)
+geneExp_filt_log = cpm(dgeObj, log=TRUE)
+boxplot(geneExp_filt_log[,1:100], xlab="", ylab="Log2 counts per million",las=2)
+abline(h=median(geneExp_filt_log),col="blue")
+title("Boxplots das logCPMs (não normalizado)")
+
+
+# normalização do tamanho da libraria de cada amostra
+dgeObj = calcNormFactors(dgeObj)
+# antes
+plotMD(geneExp_filt_log,column = 7)
+abline(h=0,col="grey")
+# depois
+plotMD(dgeObj,column = 7)
+abline(h=0,col="grey")
+
+
+# análise de expressão diferencial
+vital_status = as.factor(amostras_filtradas$vital_status)
+design = model.matrix(~vital_status)
+
+# To estimate common dispersion, trended dispersions and tagwise dispersions in one run
+dgeObj = estimateDisp(dgeObj, design = design)
+
+fit = glmFit(dgeObj, design)
+names(fit)
+head(coef(fit))
+
+lrt = glmLRT(fit, coef=2)
+topTags(lrt)
+
+
+# vizualiation of the dispersion estimates
+plotBCV(dgeObj)
+
+
+# informação acerca dos genes (subexpressos, não sinalizado, sobreexpresso)
+summary(decideTests(lrt))
+
+
+#We use glmTreat to narrow down the list of DE genes and focus on genes that are more
+#biologically meaningfu
+# visualização gráfica dos genes diferencialmente expressos
+plotMD(lrt)
+abline(h=c(-1, 1), col="blue")
+
+
+# filtrar os genes diferencialmente expressos com maior importância biológica
+tr = glmTreat(fit, lfc=log2(1.5))
+topTags(tr)
+
+summary(decideTests(tr))
+plotMD(tr)
+abline(h=c(-1, 1), col="blue")
+
+# analisar página 98
 
 #Enriquecimento
 get_entrez <- function(x) {
