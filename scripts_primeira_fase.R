@@ -207,7 +207,6 @@ plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="vital_status",
 
 # heatmap
 vsd <- varianceStabilizingTransformation(ddsSE_norm, blind = FALSE)
-resOrdered[1,]
 resOrdered = resultados[order(resultados$padj),]
 select = rownames(head(resOrdered,20))
 vsd.counts = assay(vsd)[select,]
@@ -239,12 +238,6 @@ title("Boxplots das logCPMs (não normalizado)")
 
 # normalização do tamanho da libraria de cada amostra
 dgeObj = calcNormFactors(dgeObj)
-# antes
-plotMD(geneExp_filt_log,column = 7)
-abline(h=0,col="grey")
-# depois
-plotMD(dgeObj,column = 7)
-abline(h=0,col="grey")
 
 
 # análise de expressão diferencial
@@ -253,36 +246,34 @@ design = model.matrix(~vital_status)
 
 # To estimate common dispersion, trended dispersions and tagwise dispersions in one run
 dgeObj = estimateDisp(dgeObj, design = design)
+# visualização da estimativa de dispersão
+plotBCV(dgeObj)
+
 
 fit = glmFit(dgeObj, design)
-names(fit)
 head(coef(fit))
 
 lrt = glmLRT(fit, coef=2)
 topTags(lrt)
 
 
-# vizualiation of the dispersion estimates
-plotBCV(dgeObj)
-
-
-# informação acerca dos genes (subexpressos, não sinalizado, sobreexpresso)
+# informação acerca dos genes (subexpressos, não significativo, sobreexpresso)
 summary(decideTests(lrt))
 
 
-#We use glmTreat to narrow down the list of DE genes and focus on genes that are more
-#biologically meaningfu
 # visualização gráfica dos genes diferencialmente expressos
 plotMD(lrt)
 abline(h=c(-1, 1), col="blue")
 
 
+# glmTreat é usado para filtrar os genes DE e focar apenas nos genes que são mais biologicamente significativos
 # filtrar os genes diferencialmente expressos com maior importância biológica
-tr = glmTreat(fit, lfc=log2(1.5))
-topTags(tr)
+filtered_results = glmTreat(fit, lfc=log2(1.5))
+topTags(filtered_results)
+resOrdered
 
-summary(decideTests(tr))
-plotMD(tr)
+summary(decideTests(filtered_results))
+plotMD(filtered_results)
 abline(h=c(-1, 1), col="blue")
 
 # analisar página 98
