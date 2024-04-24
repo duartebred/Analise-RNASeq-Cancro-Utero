@@ -276,7 +276,20 @@ summary(decideTests(filtered_results))
 plotMD(filtered_results)
 abline(h=c(-1, 1), col="blue")
 
-# analisar página 98
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)== rownames(topTags(filtered_results)[1,])), intgroup="vital_status", pch = 19)
+
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)== "ENSG00000171862.11") , intgroup="vital_status", pch = 19)
+
+resultados[12699,]$padj
+
+
+
+which(rownames(resultados)== "ENSG00000171862.11") # gene mais mutado no cancro endometrial
+#The most frequently mutated genes in endometrioid carcinomas are PTEN (>77%), 
+#PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%)
+#RPL22 (12%), TP53 (11%), FGFR2 (11%), and ARID5B (11%).
+# https://tcr.amegroups.org/article/view/46888/html
+
 
 #Enriquecimento
 get_entrez <- function(x) {
