@@ -434,3 +434,19 @@ resKmeans <- kmeans(t(data_rna_UCEC_matrix),centers=6)
 centroides=resKmeans$cluster
 table_result=table(centroides, ddsSE$vital_status)
 table_result
+
+
+#PCA
+dados_matriz <- assay(dados_EA)
+rna_seq_UCEC_PCA = prcomp(dados_matriz, scale = T)
+summary(rna_seq_UCEC_PCA)
+
+"encontrar o número de componentes principais necessários para explicar pelo menos 95% da variância dos dados."
+i = 1
+while ( summary(rna_seq_UCEC_PCA)$importance[3,i] < 0.95 ) i = i + 1
+i
+
+min(which(summary(rna_seq_UCEC_PCA)$importance[3,]>0.95))
+
+#necessários 29 amostras para explicar a variabilidade dos dados                      
+plot(rna_seq_UCEC_PCA$x, col = as.integer(dados_EA$figo_stage), pch = 19)  #R abort session ??? VERIFICAR ISTO
