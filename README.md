@@ -18,7 +18,7 @@ Este repositório contém todos os materiais e códigos desenvolvidos para o tra
 
 - Scripts em R utilizados para a análise de dados, incluindo pré-processamento, análises estatísticas, e algoritmos de aprendizagem de máquina.
 - Relatórios em formato HTML gerados a partir do R Markdown, detalhando todas as fases da análise, desde a preparação dos dados até a discussão dos resultados.
-- README.md: Este arquivo, fornecendo uma visão geral do projeto, instruções de instalação e execução, e informação sobre a equipa.
+- README.md -> arquivo, que fornece uma visão geral do trabalho e informação sobre a equipa.
 
 # Fases do Projeto
 
