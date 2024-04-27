@@ -10,6 +10,7 @@ BiocManager::install(c("Glimma"))
 BiocManager::install(c("gplots"))
 BiocManager::install(c("org.Mm.eg.db"))
 BiocManager::install(c("gplots"))
+BiocManager::install("genefilter")
 
 #carregar os pacotes na sessão atual do R
 library(BiocManager)
@@ -25,6 +26,7 @@ library(ggplot2)
 library(tidyverse)
 library(fgsea)
 library(pheatmap)
+library(genefilter)
 
 
 # Realização de uma consulta ao Genomic Data Commons (GDC) para obter os dados de expressão referentes ao projeto em estudo
@@ -42,7 +44,7 @@ rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = TRUE, save.filename 
 
 
 #loading dos dados a partir dos ficheiros criados no GDCprepare
-rna_seq_UCEC= get(load("C:/Users/ricar/Downloads/mRNA_TCGA-UCEC.rda"))
+rna_seq_UCEC= get(load("C:/Users/Utilizador/Desktop/Universidade/Bioinformática 1º ano/2º Semestre/Extração de Conhecimento de Dados Biológicos/Enunciado do trabalho 1/mRNA_TCGA-UCEC.rda"))
 
 
 # analise da estrutura dos dados descarregados
@@ -339,3 +341,96 @@ ggplot(fgseaRes, aes(reorder(pathway, NES), NES)) +
   geom_col(aes(fill=padj<0.05)) +
   coord_flip() +
   labs(x="Pathway", y="Normalized Enrichment Score", title="Hallmark pathways NES from GSEA")
+
+
+
+##Clustering
+
+#Hierárquico 
+
+ddsSE_norm <- DESeq(ddsSE) 
+data_rna_UCEC_matrix <- as.matrix(assay(ddsSE_norm))
+data_rna_UCEC_transposed <- t(data_rna_LGG_matrix)
+
+#calculo da matrix euclidiana
+tt_mdr = rowttests(t(data_rna_UCEC_matrix)) #teste estatístico para cada gene na matriz de dados de RNA. Determina se há diferenças significativas na expressão gênica entre diferentes condições ou grupos experimentais
+rank_mdr = order(tt_mdr$p.value) #ranking crescente dos genes com base nos seus pvalues
+#NOTA: Quem chegar aqui, não esquecer de adicionar no rmarkdow a libraria do package genefilter
+genes_mdr = rank_mdr[1:30] #seleciona os índices dos 30 menores valores-p
+data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,] #cria uma nova matriz que contém apenas as linhas correspondentes aos 30 genes mais diferencialmente expressos
+
+eucD = dist(data_rna_UCEC_rank)
+
+
+#por genes 
+#(usamos a matriz original - data_rna_LGG_matrix(linhas: genes; colunas: amostras))
+tt_mdr_g = rowttests(data_rna_UCEC_matrix)
+rank_de_mdr_g = order(tt_mdr_g$p.value)
+genes_de_mdr_g = rank_de_mdr_g[1:30]
+data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,]
+eucD = dist(data_rna_UCEC_rank)
+
+#complete
+cl.hier <- hclust(eucD)
+plot(cl.hier,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:complete, distância Euclidiana")
+
+#single
+cl.hier2 <- hclust(eucD, method="single")
+plot(cl.hier2,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:single, distância Euclidiana")
+
+#average
+cl.hier3 <- hclust(eucD, method="average")
+plot(cl.hier3,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:average, distância Euclidiana")
+
+#heatmap para os 30 genes
+heatmap(data_rna_UCEC_rank, labCol = F)
+
+
+
+#por paciente 
+#(usamos a matriz transposta - data_rna_LGG_transposed(vice-versa), útil quando o foco é amostras)
+
+tt_mdr = rowttests(t(data_rna_UCEC_matrix))
+rank_de_mdr = order(tt_mdr$p.value)
+genes_de_mdr = rank_de_mdr[1:30]
+data_rna_UCEC_rank = data_rna_UCEC_transposed[genes_mdr,]
+eucD = dist(data_rna_UCEC_rank)
+
+#complete
+cl.hier4 <- hclust(eucD)
+plot(cl.hier4,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:complete, distância Euclidiana")
+
+#single
+cl.hier5 <- hclust(eucD, method="single")
+plot(cl.hier5,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:single, distância Euclidiana")
+
+#average
+cl.hier6 <- hclust(eucD, method="average")
+plot(cl.hier6,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:average, distância Euclidiana")
+
+#heatmap para os 30 genes
+heatmap(data_rna_UCEC_rank, labCol = F)
+
+
+
+
+#k-means
+
+ofs <- c()
+for (k in 2:10) {
+  kmeans <- kmeans(t(data_rna_UCEC_matrix), centers = k, nstart = 10)
+  ofs <- c(ofs, kmeans$tot.withinss)
+}
+plot_data <- data.frame(num_clusters = 2:10, wss = ofs)
+
+ggplot(plot_data, aes(x = num_clusters, y = wss)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Num Clusters", y = "WSS") +
+  theme_minimal()
+
+#compara os clusters resultantes com uma variável categórica dos dados  (Qual o K??)
+resKmeans <- kmeans(t(data_rna_UCEC_matrix),centers=6)
+centroides=resKmeans$cluster
+table_result=table(centroides, ddsSE$vital_status)
+table_result
