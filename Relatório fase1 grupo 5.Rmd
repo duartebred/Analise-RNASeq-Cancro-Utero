@@ -429,7 +429,7 @@ Esta fase ainda se encontra em análise, sendo que o código R que nos permitir�
 #### 4.Redução da dimensionalidade e Clustering 
 
 ##### 4.1. PCA (Principal Component Analysis)
-Em datasets desta natureza estamos perante conjutnos de dados com altas dimensões no que diz respeito ao número de células e genes.Nem todos os genes são informativos e importantes para a tarefa de agrupamento de tipos celulares com base em seus perfis de expressão, levando apenas à redundância dos dados. A técnica de PCA leva a que as variávies com menor variância seja descartadas para reduzir efetivamente a dimensionalidade dos dados sem perder informações, eliminando a redundância.
+Em datasets desta natureza estamos perante conjutnos de dados com altas dimensões no que diz respeito ao número de células e genes. No entanto, nem todos os genes são informativos e importantes para a análise downstream, levando apenas à redundância dos dados. A técnica de PCA leva a que as variávies com menor variância seja descartadas para reduzir efetivamente a dimensionalidade dos dados sem perder informações, eliminando, assim, a redundância.
 
 ```{r, echo=FALSE}
 pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
@@ -438,7 +438,7 @@ summary(pcares1)$importance[3, ]
 min(which(summary(pcares1)$importance[3,]>0.95))
 pcares1$rotation[, 1:20]
 ```
-No nosso caso, podemos verificar que tendo 423 variáveis, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
+No nosso caso, podemos verificar que das 423 variáveis, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
 
 ```{r, echo=FALSE}
 plot(pcares1)
