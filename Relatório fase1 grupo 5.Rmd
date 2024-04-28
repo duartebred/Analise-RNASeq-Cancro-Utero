@@ -425,6 +425,40 @@ Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que
 #### 3.2.Análise de enriquecimento
 Esta fase ainda se encontra em análise, sendo que o código R que nos permitirá tirar as conclusões finais se encontra nos scripts auxiliares presentes no repositório.
 
+
+#### 4.Redução da dimensionalidade e Clustering 
+
+##### 4.1. PCA (Principal Component Analysis)
+Em datasets desta natureza estamos perante conjutnos de dados com altas dimensões no que diz respeito ao número de células e genes.Nem todos os genes são informativos e importantes para a tarefa de agrupamento de tipos celulares com base em seus perfis de expressão, levando apenas à redundância dos dados. A técnica de PCA leva a que as variávies com menor variância seja descartadas para reduzir efetivamente a dimensionalidade dos dados sem perder informações, eliminando a redundância.
+
+```{r, echo=FALSE}
+pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
+summary(pcares1)$importance[3, ]
+
+min(which(summary(pcares1)$importance[3,]>0.95))
+pcares1$rotation[, 1:20]
+```
+No nosso caso, podemos verificar que tendo 423 variáveis, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
+
+```{r, echo=FALSE}
+plot(pcares1)
+biplot(pcares1)
+```
+
+```{r, echo=FALSE}
+amostras_filtradas$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_filtradas$figo_stage) #recuperar transformação inicial
+amostras_filtradas$figo_stage <- factor(amostras_filtradas$figo_stage)
+cores_estagio <- rainbow(length(levels(amostras_filtradas$figo_stage)))
+plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
+```
+
+
+```{r, echo=FALSE}
+amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
+plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
+```
+
+
 ### Bibliografia
 
 1.  Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries.
