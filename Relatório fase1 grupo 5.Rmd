@@ -425,6 +425,8 @@ Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que
 #### 3.2.Análise de enriquecimento
 Esta fase ainda se encontra em análise, sendo que o código R que nos permitirá tirar as conclusões finais se encontra nos scripts auxiliares presentes no repositório.
 
+#### 4.Redução da dimensionalidade e Clustering 
+As técnicas Principal Component Analysis (PCA) e t-Distributed Stochastic Neighbor Embedding (t-SNE) são duas técnicas de redução de dimensionalidade amplamente utilizadas na análise de dados. Ambas têm como objetivo reduzir a complexidade dos dados, eliminando a redundância (muito caraterísitca em datasets desta natureza) permitindo a visualização e a compreensão de padrões ou estruturas subjacentes.Muitas vezes, é útil usar ambos em conjunto: PCA para uma visão geral dos dados e t-SNE para uma visualização mais detalhada e interpretação de padrões locais.
 
 ##### 4.1. PCA (Principal Component Analysis)
 
