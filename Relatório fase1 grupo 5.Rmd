@@ -439,11 +439,13 @@ min(which(summary(pcares1)$importance[3,]>0.95))
 pcares1$rotation[, 1:20]
 ```
 No nosso caso, podemos verificar que das 423 variáveis, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
+Através do plot dos componentes principais, podemos verificar que os primeiros dois contribuem de forma mais significativa para a explicação da variabilidade dos dados. No entanto, através do biplot desses dois componentes, não conseguimos verificar nenhuma divisão clara dos dados.
 
 ```{r, echo=FALSE}
 plot(pcares1)
 biplot(pcares1)
 ```
+Quer a nível do metadado "figo_stage", quer a nível do "vital_status", não conseguimos identificar uma sepração clara dos grupos com base nos componentes principais.
 
 ```{r, echo=FALSE}
 amostras_filtradas$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_filtradas$figo_stage) #recuperar transformação inicial
@@ -451,8 +453,6 @@ amostras_filtradas$figo_stage <- factor(amostras_filtradas$figo_stage)
 cores_estagio <- rainbow(length(levels(amostras_filtradas$figo_stage)))
 plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
 ```
-
-
 ```{r, echo=FALSE}
 amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
 plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
