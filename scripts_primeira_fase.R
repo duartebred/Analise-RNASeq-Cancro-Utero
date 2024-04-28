@@ -44,7 +44,7 @@ rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = TRUE, save.filename 
 
 
 #loading dos dados a partir dos ficheiros criados no GDCprepare
-rna_seq_UCEC= get(load("C:/Users/Utilizador/Desktop/Universidade/Bioinformática 1º ano/2º Semestre/Extração de Conhecimento de Dados Biológicos/Enunciado do trabalho 1/mRNA_TCGA-UCEC.rda"))
+rna_seq_UCEC= get(load("C:/Users/Asus/Downloads/mRNA_TCGA-UCEC.rda"))
 
 
 # analise da estrutura dos dados descarregados
@@ -342,7 +342,31 @@ ggplot(fgseaRes, aes(reorder(pathway, NES), NES)) +
   coord_flip() +
   labs(x="Pathway", y="Normalized Enrichment Score", title="Hallmark pathways NES from GSEA")
 
+#PCA
+# Os PCs com menor variância são descartados para reduzir efetivamente a dimensionalidade dos dados sem perder informações.
+#Ela faz isso encontrando novas variáveis, chamadas componentes principais, que explicam a maior parte da variação nos dados 
+#originais. Essas novas variáveis são criadas por combinações lineares das variáveis originais.
 
+pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
+summary(pcares1)$importance[3, ]
+
+"encontrar o número de componentes principais necessários para explicar pelo menos 95% da variância dos dados."
+
+min(which(summary(pcares1)$importance[3,]>0.95))
+pcares1$rotation[, 1:20]
+
+plot(pcares1)
+biplot(pcares1)
+
+
+amostras_filtradas$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_filtradas$figo_stage) #recuperar transformação inicial
+amostras_filtradas$figo_stage <- factor(amostras_filtradas$figo_stage)
+cores_estagio <- rainbow(length(levels(amostras_filtradas$figo_stage)))
+plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
+
+
+amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
+plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 
 ##Clustering
 
@@ -436,17 +460,5 @@ table_result=table(centroides, ddsSE$vital_status)
 table_result
 
 
-#PCA
-dados_matriz <- assay(dados_EA)
-rna_seq_UCEC_PCA = prcomp(dados_matriz, scale = T)
-summary(rna_seq_UCEC_PCA)
 
-"encontrar o número de componentes principais necessários para explicar pelo menos 95% da variância dos dados."
-i = 1
-while ( summary(rna_seq_UCEC_PCA)$importance[3,i] < 0.95 ) i = i + 1
-i
 
-min(which(summary(rna_seq_UCEC_PCA)$importance[3,]>0.95))
-
-#necessários 29 amostras para explicar a variabilidade dos dados                      
-plot(rna_seq_UCEC_PCA$x, col = as.integer(dados_EA$figo_stage), pch = 19)  #R abort session ??? VERIFICAR ISTO
