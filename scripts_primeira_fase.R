@@ -11,6 +11,8 @@ BiocManager::install(c("gplots"))
 BiocManager::install(c("org.Mm.eg.db"))
 BiocManager::install(c("gplots"))
 BiocManager::install("genefilter")
+install.packages("Rtsne")
+
 
 #carregar os pacotes na sessão atual do R
 library(BiocManager)
@@ -27,6 +29,7 @@ library(tidyverse)
 library(fgsea)
 library(pheatmap)
 library(genefilter)
+library(Rtsne)
 
 
 # Realização de uma consulta ao Genomic Data Commons (GDC) para obter os dados de expressão referentes ao projeto em estudo
@@ -367,6 +370,17 @@ plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
 
 amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
 plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
+
+#tSNE
+
+Rtsne(dados_EA_CPM)
+dados_EA_CPM_nd = dados_EA_CPM[!duplicated(dados_EA_CPM),]
+dim(dados_EA_CPM_nd)
+res_tnse = Rtsne(dados_EA_CPM_nd)
+plot(res_tnse$Y, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
+
+amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
+plot(res_tnse$Y, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 
 ##Clustering
 
