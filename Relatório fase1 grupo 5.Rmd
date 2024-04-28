@@ -426,10 +426,7 @@ Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que
 Esta fase ainda se encontra em análise, sendo que o código R que nos permitirá tirar as conclusões finais se encontra nos scripts auxiliares presentes no repositório.
 
 
-#### 4.Redução da dimensionalidade e Clustering 
-
 ##### 4.1. PCA (Principal Component Analysis)
-Em datasets desta natureza estamos perante conjutnos de dados com altas dimensões no que diz respeito ao número de células e genes. No entanto, nem todos os genes são informativos e importantes para a análise downstream, levando apenas à redundância dos dados. A técnica de PCA leva a que as variávies com menor variância seja descartadas para reduzir efetivamente a dimensionalidade dos dados sem perder informações, eliminando, assim, a redundância.
 
 ```{r, echo=FALSE}
 pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
@@ -438,6 +435,7 @@ summary(pcares1)$importance[3, ]
 min(which(summary(pcares1)$importance[3,]>0.95))
 pcares1$rotation[, 1:20]
 ```
+
 No nosso caso, podemos verificar que das 423 variáveis, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
 Através do plot dos componentes principais, podemos verificar que os primeiros dois contribuem de forma mais significativa para a explicação da variabilidade dos dados. No entanto, através do biplot desses dois componentes, não conseguimos verificar nenhuma divisão clara dos dados.
 
@@ -445,6 +443,7 @@ Através do plot dos componentes principais, podemos verificar que os primeiros 
 plot(pcares1)
 biplot(pcares1)
 ```
+
 Quer a nível do metadado "figo_stage", quer a nível do "vital_status", não conseguimos identificar uma sepração clara dos grupos com base nos componentes principais.
 
 ```{r, echo=FALSE}
@@ -453,11 +452,28 @@ amostras_filtradas$figo_stage <- factor(amostras_filtradas$figo_stage)
 cores_estagio <- rainbow(length(levels(amostras_filtradas$figo_stage)))
 plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
 ```
+
+
 ```{r, echo=FALSE}
 amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
 plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 ```
 
+##### 4.2. tSNE (t-Distributed Stochastic Neighbor Embedding)
+
+```{r, echo=FALSE}
+dados_EA_CPM_nd = dados_EA_CPM[!duplicated(dados_EA_CPM),]
+dim(dados_EA_CPM_nd)
+res_tnse = Rtsne(dados_EA_CPM_nd)
+plot(res_tnse$Y, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
+```
+
+```{r}
+amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
+plot(res_tnse$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
+```
+
+Aplicando a técnica tSNE chegamos á mesma conclusão que haviamos chegado com a técnica de PCA, não havendo uma separação clara entre grupos no que diz respeito ao "figo_stage" e ao "vital_status".
 
 ### Bibliografia
 
