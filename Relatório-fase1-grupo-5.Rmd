@@ -20,12 +20,13 @@ editor_options:
   }
 </style>
 
+
 ```{r setup, include=FALSE, warning = FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 Este trabalho foi desenvolvido no âmbito da UC Extração de Conhecimentos de Dados Biológicos (2023/24), do Mestrado em Bioinformática da Escola de Engenharia da Universidade do Minho, e tem como objetivo principal analisar, através das ferramentas R e packages do Bioconductor, um conjunto de dados, acedidos a partir do GDC PortalData, relacionados com o Carcinoma Endometrial do Corpo Uterino.
-Será dividido em duas fases principais.
+Será dividido em duas fases.
 
 # 1ª Parte
 
@@ -52,33 +53,43 @@ Nesta secção são destacados todos os packages utilizados no trabalho, que fac
 #install.packages("factoextra")
 #install.packages("Rtsne")
 #install.packages("EBImage")
+#install.packages("Glimma")
+#install.packages("gplots")
+#install.packages("edgeR")
+#install.packages("AnnotationDbi")
+#install.packages("RColorBrewer")
+#install.packages("tidyverse")
+#install.packages("rpart")
+#install.packages("rsample")
+#install.packages("caret")
 ```
 
 ```{r,results='hide', warning = FALSE, message=FALSE}
-#library("jpeg")
-#library("TCGAbiolinks")
-#library("SummarizedExperiment")
-#library("DESeq2")
-#library("Biobase")
-#library("DESeq2")
-#library("ggbeeswarm")
-#library("pheatmap")
-#library("org.Hs.eg.db")
-#library("fgsea")
-#library("ggplot2")
-#library("factoextra")
-#library("limma")
-#library("genefilter")
-#library("Rtsne")
-#library("party")
-#library("rpart")
-#library("caret") 
-#library("rsample")
-#library(AnnotationDbi)
-#library(org.Hs.eg.db)
-#library(ggplot2)
-#library(tidyverse)
-#library(fgsea)
+library(BiocManager)
+library(jpeg)
+library(TCGAbiolinks)
+library(Biobase)
+library(DESeq2)
+library(ggbeeswarm)
+library(genefilter)
+library(pheatmap)
+library(org.Hs.eg.db)
+library(fgsea)
+library(ggplot2)
+library(xfun)
+library(SummarizedExperiment) 
+library(factoextra)
+library(Rtsne)
+library(EBImage)
+library(Glimma)
+library(gplots)
+library(edgeR)
+library(AnnotationDbi)
+library(RColorBrewer)
+library(tidyverse)
+library(rpart)
+library(rsample)
+library(caret)
 ```
 
 ## 1.Introdução
@@ -86,7 +97,7 @@ Nesta secção são destacados todos os packages utilizados no trabalho, que fac
 ### 1.1 Enquadramento
 
 Nos dias de hoje, o cancro é uma das principais causas de morte a nível mundial, sendo que, segundo a Organização Mundial da Saúde (OMS), em 2020, foram diagnosticados cerca de 19,3 milhões de novos casos de cancro, que resultaram na morte, de aproximadamente 10 milhões de pessoas [1].
-O preocupante aumento da incidência do cancro ao longo das ultimas décadas levou ao surgimento de iniciativas, tal como a PanCancer Atlas, que visam encontrar respostas para as grandes e abrangentes questões sobre o cancro, através da análise de tumores caracterizados no conjunto de dados resultantes do projeto de The Cancer Genome Atlas (TCGA).
+O preocupante aumento da incidência do cancro ao longo das últimas décadas, levou ao surgimento de iniciativas, tal como a PanCancer Atlas, que visam encontrar respostas para as grandes e abrangentes questões sobre o cancro, através da análise de tumores caracterizados no conjunto de dados resultantes do projeto de The Cancer Genome Atlas (TCGA).
 O TCGA é um programa de genómica de referência na área do cancro que, em colaboração com o Instituto Nacional do Cancro (NCI) e o Instituto Nacional de Pesquisa do Genoma Humano (NHGRI) dos Estados Unidos, caracterizou mais de 20 mil cancros primários abrangendo 33 tipos de cancro.
 Os tipos de cancro selecionados para estudo cumprem requisitos tais como ter um mau prognóstico, ter um impacto geral na saúde pública, disponibilidade de amostras com a qualidade e quantidade desejadas, entre outros.
 (National Cancer Institute, 2022)
@@ -98,10 +109,9 @@ A taxa de sobrevivência está fortemente correlacionada com o estádio da doen�
 No entanto, para fases mais avançadas e de alto grau, é considerado letal reduzindo drasticamente a taxa de sobrevivência de 96% para 17%.(Costa & Cunha, n.d.)
 
 ```{r,echo=FALSE,results= 'markup', warning=FALSE, fig.cap= "Fig 1- Anatomia do sistema reprodutor feminino (Adaptdado de American Society Cancer)",fig.align='center'}
-library(jpeg)
 image=readJPEG("cancro_endometrial.jpg")
 # Definir margens para zero
-par(mar = c(0, 0, 0, 0))  # margens inferior, esquerda, superior, direita
+par(mar = c(0, 0, 0, 0))  
 # Criar um gráfico sem eixos
 plot(0, 0, type = "n", xlim = c(0, 1), ylim = c(0, 1), xlab = "", ylab = "", axes = FALSE)
 rasterImage(image, 0, 0, 1, 1)
@@ -120,14 +130,14 @@ Com o objetivo de analisar os dados de transcriptómica referente ao carcinoma e
 Para esse efeito recorremos ao package TCGAbiolinks, uma vez que este possibilita a interação com a base de dados GDC DataPortal e apresenta várias funções que possibilitam realizar queries à base de dados filtrando os ficheiros que se pretende selecionar para proceder, posteriormente, ao seu download.
 
 ```{r,results= 'markup'}
-#query_UCEC = GDCquery(
-#  project = "TCGA-UCEC",
-#  data.category = "Transcriptome Profiling", 
-#  data.type = "Gene Expression Quantification",
-#  workflow.type = "STAR - Counts"
-#)
-#GDCdownload(query=query_UCEC)
-#rna_seq_UCEC = GDCprepare(query = query_UCEC, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
+query_UCEC = GDCquery(
+  project = "TCGA-UCEC",
+  data.category = "Transcriptome Profiling", 
+  data.type = "Gene Expression Quantification",
+  workflow.type = "STAR - Counts"
+)
+GDCdownload(query=query_UCEC)
+rna_seq_UCEC = GDCprepare(query = query_UCEC, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
 rna_seq_UCEC = get(load("mRNA_TCGA-UCEC.rda"))
 ```
 
@@ -325,7 +335,7 @@ H0: Não existem diferenças significativas na média das idades dos pacientes e
 H1: Existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
 :::
 
-através do **shapiro.test()** verificamos que os dados da variável "age_at_index" não são normais (p.value\<0.05).
+Através do **shapiro.test()** verificamos que os dados da variável "age_at_index" não são normais (p.value\<0.05).
 No entanto, através da análise do Q-Q Plot, com sobreposição da linha qqline, verificamos que os pontos estão, na sua maioria, sobrepostos à linha diagonal e apenas as extremidades se afastam abaixo e acima da diagonal.
 Para além disso, estamos perante um grande volume de dados (n=574), ou seja, de acordo com o teorema do limite central, podemos aceitar a normalidade dos dados apesar de o valor de p-value do teste de shapiro nos levar a rejeitar a hipótese nula.
 Garantindo a normalidade e a homogenidade das variâncias, procedemos à análise **anova one way** para verificarmos se existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios e obtivemos um valor de prova de 0.722, o que nos leva a não rejeitar a hipótese nula, ou seja, não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
@@ -365,7 +375,7 @@ H0: Não existem diferenças significativas na média das idades dos pacientes e
 H1: Existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida.
 :::
 
-verificamos que a hipótese nula é rejeitada ( p value= 6.13e-05), ou seja, existem diferenças estatisticamente significativas entre a idade dos pacientes nos diferentes grupos "Alive" e "Dead".
+verificamos que a hipótese nula é rejeitada (p value= 6.13e-05), ou seja, existem diferenças estatisticamente significativas entre a idade dos pacientes nos diferentes grupos "Alive" e "Dead".
 
 ```{r, echo=FALSE}
 #idade dos pacientes em função do estado vital
@@ -403,9 +413,8 @@ Em seguida, avaliou-se a eventual presença de valores omissos ao nível da colu
 
 Embora se tenha realizado uma filtragem ao nível das amostras, uma vez que o dataset possui cerca de 61 mil genes analisados, é importante realizar uma filtragem de modo a remover genes que apresentam expressão ausente, isto é, genes que não possuem nenhuma amostra com expressão.
 Além disso, é também interessante remover genes que possuem uma baixo nível de expressão, uma vez que estes genes não permitem retirar informações relevantes acerca da expressão diferencial.
-Para isso eliminou-se do dataset todos aqueles genes que não possuíam pelo menos 20 counts em pelo menos 4 amostras, sendo que estes parâmetros são considerados standard, segundo o workflow apresentado na documentação do [DESeq2] <https://shorturl.at/nyLT0>.
+Para isso eliminou-se do dataset todos aqueles genes que não possuíam pelo menos 20 counts em pelo menos 4 amostras, sendo que estes parâmetros são considerados standard, segundo o workflow apresentado na documentação do [DESeq2](<https://shorturl.at/nyLT0>).
 Após a etapa do pré-processamento, o dataset final apresenta cerca de 28 mil genes e 423 amostras e, com o dataset filtrado, realizou-se a criação do objeto DESeqDataSet, em que se utilizou o fator "vital_status" como uma variável explicativa do modelo.
-install.packages("DESeq2")
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 dados_sem_nas = rna_seq_UCEC[,!is.na(rna_seq_UCEC$primary_diagnosis)]
@@ -413,7 +422,6 @@ amostras_EA = dados_sem_nas$primary_diagnosis == "Endometrioid adenocarcinoma, N
 dados_EA = dados_sem_nas[,amostras_EA]
 dim(dados_EA)
 
-library(DESeq2)
 gene_exp_filtrado = dados_EA[,!is.na(dados_EA$vital_status)] 
 gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
 ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
@@ -541,7 +549,9 @@ Aplicando a técnica tSNE chegamos á mesma conclusão que haviamos chegado com 
 #### 2.1.Hierárquico {.tabset}
 
 ##### Por genes
+
 ##### Por pacientes
+
 ##### Heatmap para os 30 genes
 
 #### 2.2.k-means
