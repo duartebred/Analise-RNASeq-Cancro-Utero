@@ -48,7 +48,8 @@ rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = TRUE, save.filename 
 
 #loading dos dados a partir dos ficheiros criados no GDCprepare
 rna_seq_UCEC= get(load("C:/Users/Asus/Downloads/mRNA_TCGA-UCEC.rda"))
-
+#loading ricardo
+rna_seq_UCEC= get(load("C:/Users/ricar/Downloads/mRNA_TCGA-UCEC.rda"))
 
 # analise da estrutura dos dados descarregados
 class(rna_seq_UCEC)
@@ -249,7 +250,7 @@ dgeObj = calcNormFactors(dgeObj)
 vital_status = as.factor(amostras_filtradas$vital_status)
 design = model.matrix(~vital_status)
 
-# To estimate common dispersion, trended dispersions and tagwise dispersions in one run
+# Para estimar a dispersão comum, as dispersões com tendência e as dispersões por tag em uma única execução
 dgeObj = estimateDisp(dgeObj, design = design)
 # visualização da estimativa de dispersão
 plotBCV(dgeObj)
@@ -275,26 +276,32 @@ abline(h=c(-1, 1), col="blue")
 # filtrar os genes diferencialmente expressos com maior importância biológica
 filtered_results = glmTreat(fit, lfc=log2(1.5))
 topTags(filtered_results)
-resOrdered
+
 
 summary(decideTests(filtered_results))
 plotMD(filtered_results)
 abline(h=c(-1, 1), col="blue")
 
-plotCounts(ddsSE_norm, gene=which(rownames(resultados)== rownames(topTags(filtered_results)[1,])), intgroup="vital_status", pch = 19)
 
-plotCounts(ddsSE_norm, gene=which(rownames(resultados)== "ENSG00000171862.11") , intgroup="vital_status", pch = 19)
-
-resultados[12699,]$padj
-
-
-
-which(rownames(resultados)== "ENSG00000171862.11") # gene mais mutado no cancro endometrial
-#The most frequently mutated genes in endometrioid carcinomas are PTEN (>77%), 
-#PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%)
+# análise da expressão diferencial dos genes mais comumente mutados https://tcr.amegroups.org/article/view/46888/html
+#PTEN(>77%), PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%)
 #RPL22 (12%), TP53 (11%), FGFR2 (11%), and ARID5B (11%).
-# https://tcr.amegroups.org/article/view/46888/html
 
+genes_mutados = c("ENSG00000171862.11", "ENSG00000121879.6", "ENSG00000145675.15", "ENSG00000168036.18",
+                  "ENSG00000117713", "ENSG00000133703.13", "ENSG00000102974.16", "ENSG00000116251.11",
+                  "ENSG00000141510.18", "ENSG00000066468.23", "ENSG00000150347.16")
+
+for (gene in genes_mutados){
+  n_gene_DESEQ2=c(n_gene, which(rownames(resultados)==gene))
+}
+  
+resultados[n_gene_DESEQ2,]
+
+for (gene in genes_mutados){
+  n_gene_edgeR=c(n_gene, which(rownames(filtered_results)==gene))
+}
+
+filtered_results[n_gene_edgeR,]$table
 
 #Enriquecimento
 get_entrez <- function(x) {
