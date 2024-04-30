@@ -388,7 +388,7 @@ plot(res_tnse$Y, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 
 ddsSE_norm <- DESeq(ddsSE) 
 data_rna_UCEC_matrix <- as.matrix(assay(ddsSE_norm))
-data_rna_UCEC_transposed <- t(data_rna_LGG_matrix)
+data_rna_UCEC_transposed <- t(data_rna_UCEC_matrix)
 
 #calculo da matrix euclidiana
 tt_mdr = rowttests(t(data_rna_UCEC_matrix)) #teste estatístico para cada gene na matriz de dados de RNA. Determina se há diferenças significativas na expressão gênica entre diferentes condições ou grupos experimentais
