@@ -21,6 +21,7 @@ editor_options:
   }
 </style>
 ```
+
 ```{r setup, include=FALSE, warning = FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -414,7 +415,7 @@ Numa primeira fase realizou-se a filtragem das amostras que são descritas nos m
 Em seguida, avaliou-se a eventual presença de valores omissos ao nível da coluna do estado vital e, uma vez que não existem valores omissos, transformou-se o metadado "vital_status" em fator, visto que a análise de expressão diferencial realizada pelo package DESeq2 recomenda a utilização de fatores ao invés de caracteres.
 
 Embora se tenha realizado uma filtragem ao nível das amostras, uma vez que o dataset possui cerca de 61 mil genes analisados, é importante realizar uma filtragem de modo a remover genes que apresentam expressão ausente, isto é, genes que não possuem nenhuma amostra com expressão.
-Além disso, é também interessante remover genes que possuem uma baixo nível de expressão, uma vez que estes genes não permitem retirar informações relevantes acerca da expressão diferencial.
+Além disso, é também interessante remover genes que possuem um baixo nível de expressão, uma vez que estes genes não permitem retirar informações relevantes acerca da expressão diferencial.
 Para isso eliminou-se do dataset todos aqueles genes que não possuíam pelo menos 20 counts em pelo menos 4 amostras, sendo que estes parâmetros são considerados standard, segundo o workflow apresentado na documentação do [DESeq2](https://shorturl.at/nyLT0).
 Após a etapa do pré-processamento, o dataset final apresenta cerca de 28 mil genes e 423 amostras e, com o dataset filtrado, realizou-se a criação do objeto DESeqDataSet, em que se utilizou o fator "vital_status" como uma variável explicativa do modelo.
 
@@ -445,14 +446,14 @@ sum(resultados$padj < 0.05, na.rm=TRUE) # número total de genes diferencialment
 
 Em seguida procedeu-se à utilização da função **DESeq()** para realizar os testes de expressão diferencial.
 Esta função realiza 4 etapas essências para garantir a robustez dos testes realizados.
-A primeira etapa corresponde à estimativa de fatores de tamanho para cada amostra, sendo estes utilizados para normalizar as contagens de expressão genética, tendo em consideração as diferenças nas profundidades de sequenciamento entre as amostras, sendo essencial para remover enviesamento técnicos.
+A primeira etapa corresponde à estimativa de fatores de tamanho para cada amostra, sendo estes utilizados para normalizar as contagens de expressão genética, tendo em consideração as diferenças nas profundidades de sequenciamento entre as amostras, sendo essencial para remover enviesamentos técnicos.
 Posteriormente, a função realiza a estimativa das dispersões que corresponde às variações biológica e técnica dos dados de expressão genética.
-Após a estimativa dos valores de dispersão, o modelo estatísticos é ajustado aos dados, com o intuito de se testar a expressão diferencial para o modelo criado no objeto DESeqDataSet, sendo que o teste padrão utilizado pela ferramenta é o **test Wald**, no entanto pode-se utiliar o teste de log-verossimilhança (LRT).
+Após a estimativa dos valores de dispersão, o modelo estatístico é ajustado aos dados, com o intuito de se testar a expressão diferencial para o modelo criado no objeto DESeqDataSet, sendo que o teste padrão utilizado pela ferramenta é o **test Wald**, no entanto pode-se utiliar o teste de log-verossimilhança (LRT).
 Por fim, a função deteta e substitui outliers, isto é, genes com contagens muito altas ou muito baixas em comparação com a previsão do modelo, de modo a melhorar a robustez dos resultados
 
 Dos resultados obtidos dos testes de expressão diferencial, optamos por considerar um valor de erro de 5%, resultando que apenas os genes que possuem um valor de "padjust" inferior a 5% são considerados como diferencialmente expressos Segundo a sumarização dos resultados, nas condições estabelecidas, foram indentificados no total 3431 genes, sendo que desses 2308 se encontram sobreexpressos e os restantes subexpressos.
-Os resultados contem 6 colunas.
-A colua baseMean representa a média normalizada das contagens para todas as amostras.
+Os resultados contêm 6 colunas.
+A coluna baseMean representa a média normalizada das contagens para todas as amostras.
 A coluna log2FoldChange que avalia a difrença da expressão em logaritmo de base 2 entre os dois grupos comparados neste caso "Alive" e "Dead".
 Por fim o valor de pvalue que representa a probabilidade de o valor de log fold changes calculado ser resultado do acaso.
 
@@ -464,7 +465,7 @@ DESeq2::plotMA(resultados, main="Expressão diferencial em função do estado vi
 
 A visualização dos resultados é possível através do MA plot.
 No gráfico, os pontos representados a azul correspondem aos genes que são diferencialmente expressos sendo que, os pontos que se encontram em valores positivos de "log fold change" correspondem aos genes que são sobrexpressos para a condição "Dead" enquanto que os pontos localizados para valores negativos identificam os genes que são subexpressos na condição "Dead" e por isso são considerados sobrexpressos na condição "Alive".
-Pela densidade dos pontos azuis e possível concluir que grande parte dos genes diferencialmente expressos estão sobreexpressos na condição alive.
+Pela densidade dos pontos azuis é possível concluir que grande parte dos genes diferencialmente expressos estão sobreexpressos na condição alive.
 Por outro lado, os pontos a cinza representam os genes que não são diferencialmente expressos, e por este gráfico conclui-se que grande parte dos genes em estudo não sofrem variações estatisticamente significativas para serem considerados diferenciais.
 É ainda possível verificar que uma grande dispersão dos pontos azuis, sobretudo para os genes de baixa expressão sugerindo que existe uma variabilidade considerável na expressão diferencial.
 Embora o gráfico forneça uma visão geral da expressão diferencial para a condição em estudo, é necessário avaliar os genes de forma mais detalhada de modo a determinar a sua função biológica e a relevância para o estudo em questão.
@@ -481,12 +482,12 @@ Em seguida, optou-se por analisar o comportamento de um gene indivual, tendo se 
 Pela análise do gráfico, verifica-se que o grupo "alive" possui menor variação na contagem normalizada do que o grupo "dead", o que leva a que a média do grupo "Dead" seja superior à média do grupo "Alive".
 Esta informação é corroborada pelas estatísticas produzidas para este gene em que o valor de log2FoldChange, por ser positivo indica que a classe Dead se encontra sobreexpressa, no entanto no gráfico essa conclusão fica dificultada e, para além disso, ambas as classes paracem apresentar o mesmo comportamento.
 Tal como observado no gráfico MA plot, este gene apresenta níveis de expressão baixos o que faz com que a variabilidade da expressão seja fortemente afetada por pequnas variações na contagem.
-Em adição, este "falso positivo", pode também ser resultado do facto de que cerca de 80% das amostras analisadas correspondem ao estado vivo enquanto que apenas 16% ao estado morto, levando a que a media das contagens para o estado morto seja, também, mais influenciada pela variação das contagens.
+Em adição, este "falso positivo", pode também ser resultado do facto de que cerca de 80% das amostras analisadas correspondem ao estado vivo enquanto que apenas 16% ao estado morto, levando a que a média das contagens para o estado morto seja, também, mais influenciada pela variação das contagens.
 Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que, atualmente, não existem evidências científicas que comprovem que o gene ELAVL4 (ENSG00000162374.18), possua impacto direto na progessão do estadio do cancro, na formação de metasteses ou com a gravidade do tumor, sendo que, para o tumor endometrial, ainda não existem estudos que incidam sobre este gene, reforçando portanto que o facto deste gene ser considerado diferencialmente expresso pode ser o resultado de limitações técninas e não pelo impacto biológico que este gene apresenta nas amostras analisadas sendo necessários estudos posteriores.
 
 #### 4.1.2 edgeR
 
-Como a utilização do package DESEQ2 não permitiu chegar à conclusão clara de que genes se encontram diferencialmente expressos entre os dois grupos em estudos, recorreu-se a um segundo package, [edgeR] (<https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf>) para proceder à análise de expressão diferencial, visto que a função utilizada para realizar a expressão diferencial no edgeR não realiza a normalização dos dados quer a nível das contagens de reads quer da dimensão da libraria, as primeiras etapas envolvem a normalização dos dados de modo a que possam ser comparáveis minimizando o enviesamento técnico e experimental. A normalização das contagens de reads foi realizada através do método cpm (counts per million) sendo que os genes que possuem baixo nível de expressão foram removidos tendo sido preservados apenas aqueles genes que possuem um valor cpm superior a 0.5 em pelo menos 2 amostras (estes parâmetros foram escolhidos com base na informação disponibilizada na documentação do package). A normalização do tamanho das librarias é importante para garantir que as diferenças observadas na expressão genética são, na verdade, resultado de diferenças biológicas e não a consequência de artefactos técnicos como, por exemplo, a profundidade do sequenciamento.
+Como a utilização do package DESEQ2 não permitiu chegar à conclusão clara de que genes se encontram diferencialmente expressos entre os dois grupos em estudos, recorreu-se a um segundo package, [edgeR](<https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf>) para proceder à análise de expressão diferencial, visto que a função utilizada para realizar a expressão diferencial no edgeR não realiza a normalização dos dados quer a nível das contagens de reads quer da dimensão da libraria, as primeiras etapas envolvem a normalização dos dados de modo a que possam ser comparáveis minimizando o enviesamento técnico e experimental. A normalização das contagens de reads foi realizada através do método cpm (counts per million) sendo que os genes que possuem baixo nível de expressão foram removidos tendo sido preservados apenas aqueles genes que possuem um valor cpm superior a 0.5 em pelo menos 2 amostras (estes parâmetros foram escolhidos com base na informação disponibilizada na documentação do package). A normalização do tamanho das librarias é importante para garantir que as diferenças observadas na expressão genética são, na verdade, resultado de diferenças biológicas e não a consequência de artefactos técnicos como, por exemplo, a profundidade do sequenciamento.
 
 ```{r}
 # normalização dos dados das contagens
