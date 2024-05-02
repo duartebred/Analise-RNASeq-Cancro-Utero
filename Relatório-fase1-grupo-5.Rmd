@@ -408,8 +408,8 @@ kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$vital_status) # teste 
 
 #### 4.1.1 DESEQ2
 
-Com o intuito de proceder à análise dos genes que se encontram diferencialmente expressos no tumor "Endometrioid adenocarcinoma, NOS" em função do estado vital do paciente em estudo procedeu-se ao pré-processamento dos dados de modo a facilitar e otimizar a análise diferencial reduzindo o tempo e os recursos computacionais necessários.
-Numa primeira fase realizou-se a filtragem das amostras que são descritas nos metadados como tendo diagnóstico primário de "Endometrioid adenocarcinoma, NOS", já que apenas estas amostras representam relevância para este estudo.
+Com o intuito de proceder à análise dos genes que se encontram diferencialmente expressos no tumor "Endometrioid adenocarcinoma, NOS" em função do estado vital do paciente procedeu-se ao pré-processamento dos dados de modo a facilitar e otimizar a análise diferencial reduzindo o tempo e os recursos computacionais necessários.
+Numa primeira fase realizou-se a filtragem das amostras que possuem diagnóstico primário "Endometrioid adenocarcinoma, NOS", já que apenas estas amostras representam relevância para o nosso estudo.
 Em seguida, avaliou-se a eventual presença de valores omissos ao nível da coluna do estado vital e, uma vez que não existem valores omissos, transformou-se o metadado "vital_status" em fator, visto que a análise de expressão diferencial realizada pelo package DESeq2 recomenda a utilização de fatores ao invés de caracteres.
 
 Embora se tenha realizado uma filtragem ao nível das amostras, uma vez que o dataset possui cerca de 61 mil genes analisados, é importante realizar uma filtragem de modo a remover genes que apresentam expressão ausente, isto é, genes que não possuem nenhuma amostra com expressão.
@@ -431,7 +431,7 @@ dim(ddsSE)
 ddsSE = ddsSE[rowSums(counts(ddsSE)) > 0, ]
 dim(ddsSE)
 
-genes_manter = rowSums(counts(ddsSE) >= 10) >= 3
+genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
 
@@ -445,14 +445,14 @@ sum(resultados$padj < 0.05, na.rm=TRUE) # número total de genes diferencialment
 Em seguida procedeu-se à utilização da função **DESeq()** para realizar os testes de expressão diferencial.
 Esta função realiza 4 etapas essências para garantir a robustez dos testes realizados.
 A primeira etapa corresponde à estimativa de fatores de tamanho para cada amostra, sendo estes utilizados para normalizar as contagens de expressão genética, tendo em consideração as diferenças nas profundidades de sequenciamento entre as amostras, sendo essencial para remover enviesamentos técnicos.
-Posteriormente, a função realiza a estimativa das dispersões que corresponde às variações biológica e técnica dos dados de expressão genética.
-Após a estimativa dos valores de dispersão, o modelo estatístico é ajustado aos dados, com o intuito de se testar a expressão diferencial para o modelo criado no objeto DESeqDataSet, sendo que o teste padrão utilizado pela ferramenta é o **test Wald**, no entanto pode-se utiliar o teste de log-verossimilhança (LRT).
+Posteriormente, a função realiza a estimativa das dispersões correspondentes às variações biológica e técnica dos dados de expressão genética.
+Após a estimativa dos valores de dispersão, o modelo estatístico é ajustado aos dados, com o intuito de se testar a expressão diferencial para o modelo criado no objeto DESeqDataSet, sendo que o teste padrão utilizado pela ferramenta é o **test Wald**, no entanto pode-se utilizar o teste de log-verossimilhança (LRT).
 Por fim, a função deteta e substitui outliers, isto é, genes com contagens muito altas ou muito baixas em comparação com a previsão do modelo, de modo a melhorar a robustez dos resultados
 
-Dos resultados obtidos dos testes de expressão diferencial, optamos por considerar um valor de erro de 5%, resultando que apenas os genes que possuem um valor de "padjust" inferior a 5% são considerados como diferencialmente expressos Segundo a sumarização dos resultados, nas condições estabelecidas, foram indentificados no total 3431 genes, sendo que desses 2308 se encontram sobreexpressos e os restantes subexpressos.
+Dos resultados obtidos dos testes de expressão diferencial, optamos por considerar um valor de erro de 5%, resultando que apenas os genes que possuem um valor de "padjust" inferior a 5% são considerados como diferencialmente expressos. Segundo a sumarização dos resultados, nas condições estabelecidas, foram identificados no total 3431 genes, sendo que desses 2308 se encontram sobreexpressos e os restantes subexpressos.
 Os resultados contêm 6 colunas.
 A coluna baseMean representa a média normalizada das contagens para todas as amostras.
-A coluna log2FoldChange que avalia a difrença da expressão em logaritmo de base 2 entre os dois grupos comparados neste caso "Alive" e "Dead".
+A coluna log2FoldChange que avalia a diferença da expressão em logaritmo de base 2 entre os dois grupos comparados neste caso "Alive" e "Dead".
 Por fim o valor de pvalue que representa a probabilidade de o valor de log fold changes calculado ser resultado do acaso.
 
 ```{r, echo=FALSE}
@@ -461,9 +461,8 @@ DESeq2::plotMA(resultados, main="Expressão diferencial em função do estado vi
 
 ```
 
-A visualização dos resultados é possível através do MA plot.
-No gráfico, os pontos representados a azul correspondem aos genes que são diferencialmente expressos sendo que, os pontos que se encontram em valores positivos de "log fold change" correspondem aos genes que são sobrexpressos para a condição "Dead" enquanto que os pontos localizados para valores negativos identificam os genes que são subexpressos na condição "Dead" e por isso são considerados sobrexpressos na condição "Alive".
-Pela densidade dos pontos azuis é possível concluir que grande parte dos genes diferencialmente expressos estão sobreexpressos na condição alive.
+A visualização dos resultados é possível através do plotMA.
+No gráfico, os pontos representados a azul correspondem aos genes que são diferencialmente expressos sendo que, os pontos que se encontram em valores positivos de "log fold change" correspondem aos genes que são sobrexpressos para a condição "Dead" enquanto que os pontos localizados para valores negativos identificam os genes que são subexpressos na condição "Dead" e por isso são considerados sobrexpressos na condição "Alive". Pela densidade dos pontos azuis é possível concluir que grande parte dos genes diferencialmente expressos estão sobreexpressos na condição alive.
 Por outro lado, os pontos a cinza representam os genes que não são diferencialmente expressos, e por este gráfico conclui-se que grande parte dos genes em estudo não sofrem variações estatisticamente significativas para serem considerados diferenciais.
 É ainda possível verificar que uma grande dispersão dos pontos azuis, sobretudo para os genes de baixa expressão sugerindo que existe uma variabilidade considerável na expressão diferencial.
 Embora o gráfico forneça uma visão geral da expressão diferencial para a condição em estudo, é necessário avaliar os genes de forma mais detalhada de modo a determinar a sua função biológica e a relevância para o estudo em questão.
@@ -476,16 +475,17 @@ resOrdered = resultados[order(resultados$padj),]
 resOrdered[1,]
 ```
 
-Em seguida, optou-se por analisar o comportamento de um gene indivual, tendo se escolhido o gene que apresenta o menor valor de padjust indicando que será o gene que mais se encontra diferencialmente expresso.
+Em seguida, optou-se por analisar o comportamento de um gene individual, tendo se escolhido o gene que apresenta o menor valor de padjust indicando que será o gene que mais se encontra diferencialmente expresso.
 Pela análise do gráfico, verifica-se que o grupo "alive" possui menor variação na contagem normalizada do que o grupo "dead", o que leva a que a média do grupo "Dead" seja superior à média do grupo "Alive".
-Esta informação é corroborada pelas estatísticas produzidas para este gene em que o valor de log2FoldChange, por ser positivo indica que a classe Dead se encontra sobreexpressa, no entanto no gráfico essa conclusão fica dificultada e, para além disso, ambas as classes paracem apresentar o mesmo comportamento.
-Tal como observado no gráfico MA plot, este gene apresenta níveis de expressão baixos o que faz com que a variabilidade da expressão seja fortemente afetada por pequnas variações na contagem.
+Esta informação é corroborada pelas estatísticas produzidas para este gene em que o valor de log2FoldChange, por ser positivo indica que a classe Dead se encontra sobreexpressa, no entanto no gráfico essa conclusão fica dificultada e, para além disso, ambas as classes parecem apresentar o mesmo comportamento.
+Tal como observado no gráfico plotMA, este gene apresenta níveis de expressão baixos o que faz com que a variabilidade da expressão seja fortemente afetada por pequenas variações na contagem.
 Em adição, este "falso positivo", pode também ser resultado do facto de que cerca de 80% das amostras analisadas correspondem ao estado vivo enquanto que apenas 16% ao estado morto, levando a que a média das contagens para o estado morto seja, também, mais influenciada pela variação das contagens.
-Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que, atualmente, não existem evidências científicas que comprovem que o gene ELAVL4 (ENSG00000162374.18), possua impacto direto na progessão do estadio do cancro, na formação de metasteses ou com a gravidade do tumor, sendo que, para o tumor endometrial, ainda não existem estudos que incidam sobre este gene, reforçando portanto que o facto deste gene ser considerado diferencialmente expresso pode ser o resultado de limitações técninas e não pelo impacto biológico que este gene apresenta nas amostras analisadas sendo necessários estudos posteriores.
+Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que, atualmente, não existem evidências científicas que comprovem que o gene ELAVL4 (ENSG00000162374.18), possua impacto direto na progressão do estádio do cancro, na formação de metasteses ou com a gravidade do tumor, sendo que, para o tumor endometrial, ainda não existem estudos que incidam sobre este gene, reforçando portanto que o facto deste gene ser considerado diferencialmente expresso pode ser o resultado de limitações técnicas e não pelo impacto biológico que este gene apresenta nas amostras analisadas sendo necessários estudos posteriores.
 
 #### 4.1.2 edgeR
 
-Como a utilização do package DESEQ2 não permitiu chegar à conclusão clara de que genes se encontram diferencialmente expressos entre os dois grupos em estudos, recorreu-se a um segundo package, [edgeR](<https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf>) para proceder à análise de expressão diferencial, visto que a função utilizada para realizar a expressão diferencial no edgeR não realiza a normalização dos dados quer a nível das contagens de reads quer da dimensão da libraria, as primeiras etapas envolvem a normalização dos dados de modo a que possam ser comparáveis minimizando o enviesamento técnico e experimental. A normalização das contagens de reads foi realizada através do método cpm (counts per million) sendo que os genes que possuem baixo nível de expressão foram removidos tendo sido preservados apenas aqueles genes que possuem um valor cpm superior a 0.5 em pelo menos 2 amostras (estes parâmetros foram escolhidos com base na informação disponibilizada na documentação do package). A normalização do tamanho das librarias é importante para garantir que as diferenças observadas na expressão genética são, na verdade, resultado de diferenças biológicas e não a consequência de artefactos técnicos como, por exemplo, a profundidade do sequenciamento.
+Como a utilização do package DESEQ2 não permitiu chegar à conclusão clara de que genes se encontram diferencialmente expressos entre os dois grupos em estudos, recorreu-se a um segundo package, [edgeR](<https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf>) para proceder à análise de expressão diferencial.
+A função utilizada para proceder à análise da expressão diferencial no edgeR não realiza a normalização dos dados quer a nível das contagens de reads quer da dimensão da libraria, logo as primeiras etapas do workflow envolvem a normalização dos dados de modo a que possam ser comparáveis minimizando o enviesamento técnico e experimental. A normalização das contagens de reads fez-se através do método cpm (counts per million) sendo que os genes que possuem baixo nível de expressão foram removidos tendo sido preservados apenas aqueles genes que possuem um valor cpm superior a 0.5 em pelo menos 2 amostras (estes parâmetros foram escolhidos com base na informação disponibilizada na documentação do package). A normalização do tamanho das librarias é importante para garantir que as diferenças observadas na expressão genética são, na verdade, resultado de diferenças biológicas e não a consequência de artefactos técnicos como, por exemplo, a profundidade do sequenciamento.
 
 ```{r}
 # normalização dos dados das contagens
@@ -505,10 +505,8 @@ dgeObj = calcNormFactors(dgeObj)
 ```
 
 
-Em seguida, após a normalização e filtragem de genes procedeu-se a criação do design do fator em estudo e procedeu-se à estimativa dos fatores de dispersão, tendo sigo calculados os fatores de dispersão comum, com tendência e tag em uma única execução com a função estimateDisp. Esta estimativa é um medida da variabilidade dos dados e é um passo crucial para modelar a relação entre a média e a variância dos dados para cada gene.
+Em seguida, após a normalização e filtragem de genes, procedeu-se a criação do design da variável em estudo e procedeu-se à estimativa dos fatores de dispersão, tendo sido calculados os fatores de dispersão comum, com tendência e tag com a função estimateDisp. Esta estimativa é um medida da variabilidade dos dados e é um passo crucial para modelar a relação entre a média e a variância dos dados para cada gene.
 Nesta etapa é comum a realização da estimativa dos três tipos de dispersão. A dispersão comum (common dispersion) é uma medida da variabilidade geral dos dados entre as amostras, isto é a variação que não é associada a características específicas de genes individuais, mas sim à variabilidade global dos dados de expressão genética no conjunto total de genes analisados sendo importante para modelar a relação entre a média e a variância dos dados, essencial para identificar com confiança genes diferencialmente expressos. A dispersão com tendência (trended dispersion) é uma medida adicional da variabilidade dos dados que têm em conta padrões ou tendências específicas utilizada para modelar padrões adicionais de variabilidade. Por fim, a dispersão por tag (tagwise dispersion) é uma medida da variabilidade específica para cada gene permitindo capturar a variação gene a gene que é útil para análises de expressão diferencial.
-
-# perguntar ao professor o que este gráfico significa (plotBCV)
 
 
 ```{r}
@@ -518,9 +516,8 @@ design = model.matrix(~vital_status)
 
 # Estimativa da dispersão comum, dispersão com tendência e dispersão por tag em uma única execução
 dgeObj = estimateDisp(dgeObj, design = design)
-plotBCV(dgeObj)
 
-
+# ajuste do modelo e teste de razão de verosimilhança 
 fit = glmFit(dgeObj, design)
 lrt = glmLRT(fit, coef=2)
 topTags(lrt)
@@ -537,10 +534,10 @@ abline(h=c(-1, 1), col="blue")
 ```
 
 Em seguida realizou-se o ajuste do modelo linear generalizado (GLM) aos dados de expressão genética contidos no objeto dgeObj tendo em conta o design aplicado, que, neste cenário de estudo, pretende avaliar as diferenças a nível da expressão genética de acordo com o vital_status de cada amostra. Em seguida, com os resultados do ajuste do modelo linear generalizado, realizou-se o teste de razão de verosimilhança (LRT) para testar a significância das diferenças entre os níveis em estudo.
-Com base nesta análise, obtemos 791 genes subexpressos e 2593 sobreexpressos. Comparando com os resultados obtidos através do DESeq2 verifica-se que o edgeR identificou menos 47 genes diferenialmente expressos. A análise dos gráficos dos genes diferencialmente expressos de ambos os packages permite concluir que embora os packages tenham produzidos resultados ligeiramente diferentes a análise é bastante semelhante.
-Para esta abordagem o gene que apresentou diferença de expressão mais expressiva foi o gene ENSG00000066405.13 com um valor de PValue de 7.142125e-122. Este gene expressa a proteína ["claudin 18"](https://www.uniprot.org/uniprotkb/P56856/entry) que, segundo um estudo realizado 2020, não se encontra expresso em tecidos saudáveis com a exceção do tecido da mucosa gástrica, sendo comummente expresso em vários tipos diferentes de cancro [5]. Os nossos resultados sugerem que este gene pode ser um indicador da gravidade do cancro, uma vez que existe diferença significativa de expressão entre os dois níveis das amostras, no entanto, não até ao momento nenhum estudo correlaciona a expressão desta proteína com a gravidade do cancro endometrial.
+Com base nesta análise, obtemos 791 genes subexpressos e 2593 sobreexpressos. Comparando com os resultados obtidos através do DESeq2 verifica-se que o edgeR identificou menos 47 genes diferencialmente expressos. A análise dos gráficos dos genes diferencialmente expressos de ambos os packages permite concluir que embora os packages tenham produzidos resultados ligeiramente diferentes a análise é bastante semelhante.
+Para esta abordagem o gene que apresentou diferença de expressão mais expressiva foi o gene ENSG00000066405.13 com um valor de PValue de 7.142125e-122. Este gene expressa a proteína ["claudin 18"](https://www.uniprot.org/uniprotkb/P56856/entry) que, segundo um estudo realizado 2020, não se encontra expresso em tecidos saudáveis com a exceção do tecido da mucosa gástrica, sendo comummente expresso em vários tipos diferentes de cancro [5]. Os nossos resultados sugerem que este gene pode ser um indicador da gravidade do cancro, uma vez que existe diferença significativa de expressão entre os dois níveis das amostras, no entanto, não há, até ao momento, nenhum estudo que correlaciona a expressão desta proteína com a gravidade do cancro endometrial.
 
-Segundo o estudo realizado por Bianco B et al. em 2020 os genes mais comumente mutados neste tipo de cancro são PTEN(>77%), PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%), RPL22 (12%), TP53 (11%), FGFR2 (11%) e ARID5B (11%). Com o objetivo de analisar se estes genes possuem expressão diferencial entre os dois grupos primeiro realizou-se uma filtragem dos resultados de modo apenas considerar como diferencialmente expressos os genes com maior impacto biológico. Esta filtragem levou a que apenas 125 genes fossem considerados subexpressos e 1394 considerados sobreexpressos, tendo assim garantia que estes genes identificados são aqueles que apresentam maior importância biológica.
+Segundo o estudo realizado por Bianco B et al. em 2020 [6] os genes mais comummente mutados neste tipo de cancro são PTEN(>77%), PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%), RPL22 (12%), TP53 (11%), FGFR2 (11%) e ARID5B (11%). Com o intuito de analisar se estes genes possuem expressão diferencial entre os dois grupos primeiro realizou-se uma filtragem dos resultados de modo apenas considerar como diferencialmente expressos os genes com maior impacto biológico. Esta filtragem levou a que apenas 125 genes fossem considerados subexpressos e 1394 considerados sobreexpressos, tendo assim garantia que estes genes identificados são aqueles que apresentam maior importância biológica.
 
 ```{r}
 filtered_results = glmTreat(fit, lfc=log2(1.5))
@@ -576,7 +573,7 @@ resultados[n_gene_DESeq2,]
 
 ```
 
-Uma análise mais detalhadas destes genes, revela que na realidade o gene ENSG00000121879.6, apresenta um comportamento semelhante em ambos os grupos, no entanto, o nível "Dead" apresenta maior variação dos resultados e, além disso, possui um menor número de amostras, e, por estas razões, o package identifica o gene como sendo diferencialmente expresso, uma vez que a variação, leva a um aumento da média do grupo "Dead.
+Uma análise mais detalhadas destes genes, revela que na realidade o gene ENSG00000121879.6, apresenta um comportamento semelhante em ambos os grupos, no entanto, o nível "Dead" apresenta maior variação dos resultados e, além disso, possui um menor número de amostras, e, por estas razões, o package identifica o gene como sendo diferencialmente expresso, uma vez que a variação leva a um aumento da média do grupo "Dead.
 Para o gene ENSG00000133703.13 os resultados parecem mais promissores, visto que, o grupo "Dead" apresenta resultados com menor variação, no entanto, não existe separação clara entre os dois grupos o que pode sugerir que se o dataset possuísse mais amostras para o grupo "Dead" o gene, muito possivelmente, não seria identificado como diferencialmente expresso.
 Por os motivos apresentados acima, não existe confiança de que, na realidade, este genes são diferencialmente expressos.
 
