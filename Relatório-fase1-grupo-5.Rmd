@@ -53,7 +53,6 @@ Nesta secção são destacados todos os packages utilizados no trabalho, que fac
 #install.packages("SummarizedExperiment") 
 #install.packages("factoextra")
 #install.packages("Rtsne")
-#install.packages("EBImage")
 #install.packages("Glimma")
 #install.packages("gplots")
 #install.packages("edgeR")
@@ -81,7 +80,6 @@ library(xfun)
 library(SummarizedExperiment) 
 library(factoextra)
 library(Rtsne)
-library(EBImage)
 library(Glimma)
 library(gplots)
 library(edgeR)
@@ -687,7 +685,9 @@ plot(cl.hier6,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 
 Fazendo uma análise global dos três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 pacientes com um perfil genético mais diferenciado. Todavia, a escolha de clusters nos três tipos de abordagens é mais subjetiva e complicada. Desta forma, não conseguimos garantir uma divisão semelhante em clusters dos 30 pacientes, sendo este um aspecto que poderia causar dificuldade numa futura análise.
 
 ##### Heatmap para os 30 genes
-Construi-se o heatmap para os 30 genes
+Construi-se o heatmap para os 30 genes.
+
+##### Vale a pena pôr o heatmap?
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 heatmap(data_rna_UCEC_rank, labCol = F)
@@ -712,11 +712,11 @@ ggplot(plot_data, aes(x = num_clusters, y = wss)) +
   theme_minimal()
 ```
 
-Através da observação do gráfico é possível verificar que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto com K=6.A partir do ponto k=6, a adição de mais clusters não resulta numa redução significativa da WSS. Partindo desse princípio, decidimos aplicar o algoritmo do Kmeans, tendo como referência o valor de 6 centroides, de modo a criar uma tabela que nos permitisse analisar a distribuição dos pacientes nos clusters em relação ao metadado estudado (vital_status).
+Através da observação do gráfico é possível verificar que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto com K=4.A partir do ponto k=4, a adição de mais clusters não resulta numa redução significativa da WSS. Partindo desse princípio, decidimos aplicar o algoritmo do Kmeans, tendo como referência o valor de 4 centróides, de modo a criar uma tabela que nos permitisse analisar a distribuição dos pacientes nos clusters em relação ao metadado estudado (vital_status).
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 #compara os clusters resultantes com uma variável categórica dos dados  (Qual o K??)
-resKmeans <- kmeans(t(data_rna_UCEC_matrix),centers=6)
+resKmeans <- kmeans(t(data_rna_UCEC_matrix),centers=4)
 centroides=resKmeans$cluster
 table_result=table(centroides, ddsSE$vital_status)
 table_result
