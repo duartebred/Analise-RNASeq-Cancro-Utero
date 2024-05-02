@@ -12,6 +12,7 @@ BiocManager::install(c("org.Mm.eg.db"))
 BiocManager::install(c("gplots"))
 BiocManager::install("genefilter")
 install.packages("Rtsne")
+BiocManager::install(c("fgsea"))
 
 
 #carregar os pacotes na sessão atual do R
@@ -30,6 +31,8 @@ library(fgsea)
 library(pheatmap)
 library(genefilter)
 library(Rtsne)
+library(fgsea)
+library(GSEABase)
 
 
 # Realização de uma consulta ao Genomic Data Commons (GDC) para obter os dados de expressão referentes ao projeto em estudo
@@ -308,6 +311,34 @@ resultados[n_gene_DESeq2,]
 plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000121879.6"), intgroup="vital_status", pch = 19)
 plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000133703.13"), intgroup="vital_status", pch = 19)
 
+
+# enrequecimento Ricardo
+
+# extração do nome de cada gene
+nome_gene=c()
+for (gene in rownames(resultados)) {
+  nome_gene =c(nome_gene,linhas_metadados[gene,"gene_name"])
+}
+
+
+# adição do nome de cada gene ao dataframe dos resultados da expressão diferencial
+resultados["gene_name"] =nome_gene
+
+# salvar o data frame resultados
+write.csv(resultados, file = "dge_deseq2.csv", row.names = T)
+
+# carregamento do grupo de genes para a análise de enriquecimento
+path = gmtPathways("h.all.v2023.2.Hs.symbols.gmt")
+# Ordena os resultados pela alteração na expressão em ordem decrescente
+results_ord = resultados[order(-resultados[,"log2FoldChange"]), ]
+# Prepara os rankings para a FGSEA
+ranks = results_ord$log2FoldChange
+# associa às linhas o nome do gene
+names(ranks) <- results_ord$gene_name
+
+
+fgseaRes = fgsea(path, stats = ranks, minSize = 15, maxSize = 500)
+head(fgseaRes[order(padj), ])
 
 
 #Enriquecimento
