@@ -516,16 +516,17 @@ Nesta etapa é comum a realização da estimativa dos três tipos de dispersão.
 vital_status = as.factor(amostras_filtradas$vital_status)
 design = model.matrix(~vital_status)
 
-# Para estimar a dispersão comum, as dispersões com tendência e as dispersões por tag em uma única execução
+# Estimativa da dispersão comum, dispersão com tendência e dispersão por tag em uma única execução
 dgeObj = estimateDisp(dgeObj, design = design)
 plotBCV(dgeObj)
 
 
 fit = glmFit(dgeObj, design)
 lrt = glmLRT(fit, coef=2)
+topTags(lrt)
 
 
-# informação acerca dos genes (subexpressos, não significativo, sobreexpresso)
+# sumario dos resultados
 summary(decideTests(lrt))
 
 
@@ -535,6 +536,55 @@ abline(h=c(-1, 1), col="blue")
 
 ```
 
+Em seguida realizou-se o ajuste do modelo linear generalizado (GLM) aos dados de expressão genética contidos no objeto dgeObj tendo em conta o design aplicado, que, neste cenário de estudo, pretende avaliar as diferenças a nível da expressão genética de acordo com o vital_status de cada amostra. Em seguida, com os resultados do ajuste do modelo linear generalizado, realizou-se o teste de razão de verosimilhança (LRT) para testar a significância das diferenças entre os níveis em estudo.
+Com base nesta análise, obtemos 791 genes subexpressos e 2593 sobreexpressos. Comparando com os resultados obtidos através do DESeq2 verifica-se que o edgeR identificou menos 47 genes diferenialmente expressos. A análise dos gráficos dos genes diferencialmente expressos de ambos os packages permite concluir que embora os packages tenham produzidos resultados ligeiramente diferentes a análise é bastante semelhante.
+Para esta abordagem o gene que apresentou diferença de expressão mais expressiva foi o gene ENSG00000066405.13 com um valor de PValue de 7.142125e-122. Este gene expressa a proteína ["claudin 18"](https://www.uniprot.org/uniprotkb/P56856/entry) que, segundo um estudo realizado 2020, não se encontra expresso em tecidos saudáveis com a exceção do tecido da mucosa gástrica, sendo comummente expresso em vários tipos diferentes de cancro [5]. Os nossos resultados sugerem que este gene pode ser um indicador da gravidade do cancro, uma vez que existe diferença significativa de expressão entre os dois níveis das amostras, no entanto, não até ao momento nenhum estudo correlaciona a expressão desta proteína com a gravidade do cancro endometrial.
+
+Segundo o estudo realizado por Bianco B et al. em 2020 os genes mais comumente mutados neste tipo de cancro são PTEN(>77%), PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%), RPL22 (12%), TP53 (11%), FGFR2 (11%) e ARID5B (11%). Com o objetivo de analisar se estes genes possuem expressão diferencial entre os dois grupos primeiro realizou-se uma filtragem dos resultados de modo apenas considerar como diferencialmente expressos os genes com maior impacto biológico. Esta filtragem levou a que apenas 125 genes fossem considerados subexpressos e 1394 considerados sobreexpressos, tendo assim garantia que estes genes identificados são aqueles que apresentam maior importância biológica.
+
+```{r}
+filtered_results = glmTreat(fit, lfc=log2(1.5))
+
+summary(decideTests(filtered_results))
+
+plotMD(filtered_results)
+abline(h=c(-1, 1), col="blue")
+
+```
+
+Em seguida, recolheu-se os ids ensembl dos genes identificados pelo estudo e verificou-se se os genes apresentam expressão diferencial. A análise realizada com o package edgeR revelou que todos os genes referidos no estudo não apresentam expressão diferencial para os níveis do "vital_status", no entanto o package DESeq2 identifica dois dos genes como sendo diferencialmente expressos, sendo estes o gene ENSG00000121879.6 e o gene ENSG00000133703.13
+
+
+```{r}
+genes_mutados = c("ENSG00000171862.11", "ENSG00000121879.6", "ENSG00000145675.15", "ENSG00000168036.18",
+                  "ENSG00000117713.20", "ENSG00000133703.13", "ENSG00000102974.16", "ENSG00000116251.11",
+                  "ENSG00000141510.18", "ENSG00000066468.23", "ENSG00000150347.16")
+
+
+n_gene_edgeR=c()
+for (gene in genes_mutados){
+  n_gene_edgeR=c(n_gene_edgeR, which(rownames(filtered_results)==gene))
+}
+filtered_results[n_gene_edgeR,]$table
+
+
+n_gene_DESeq2=c()
+for (gene in genes_mutados){
+  n_gene_DESeq2=c(n_gene_DESeq2, which(rownames(resultados)==gene))
+}
+resultados[n_gene_DESeq2,]
+
+```
+
+Uma análise mais detalhadas destes genes, revela que na realidade o gene ENSG00000121879.6, apresenta um comportamento semelhante em ambos os grupos, no entanto, o nível "Dead" apresenta maior variação dos resultados e, além disso, possui um menor número de amostras, e, por estas razões, o package identifica o gene como sendo diferencialmente expresso, uma vez que a variação, leva a um aumento da média do grupo "Dead.
+Para o gene ENSG00000133703.13 os resultados parecem mais promissores, visto que, o grupo "Dead" apresenta resultados com menor variação, no entanto, não existe separação clara entre os dois grupos o que pode sugerir que se o dataset possuísse mais amostras para o grupo "Dead" o gene, muito possivelmente, não seria identificado como diferencialmente expresso.
+Por os motivos apresentados acima, não existe confiança de que, na realidade, este genes são diferencialmente expressos.
+
+
+```{r}
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000121879.6"), intgroup="vital_status", pch = 19)
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000133703.13"), intgroup="vital_status", pch = 19)
+```
 
 ### 4.2.Análise de enriquecimento
 
@@ -724,27 +774,19 @@ table_result
 
 Observando a tabela, é possível verificar que existem clusters que têm uma separação diferenciada no que toca ao metadado analisado (vital_status), cumprindo o principal propósito do k-means. Todavia, existem clusters cuja separação não é a ideal.
 
-## Análise não supervisionada
+## Análise supervisionada
 
 
 ### Bibliografia
 
-1.  Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries.
-    CA Cancer J Clin.
-    2021 May;71(3):209-249.
-    \doi: 10.3322/caac.21660.
+1.  Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries. CA Cancer J Clin. 2021. \doi: 10.3322/caac.21660.
 
-2.  Creasman WT, Odicino F, Maisonneuve P, Quinn MA, Beller U, Benedet JL, Heintz A, Ngan H, Pecorelli S. Carcinoma of the Corpus Uteri.
-    Int J Gynaecol Obstet.
-    2006 Nov;95 Suppl 1:S105-S143.
-    \doi: 10.1016/S0020-7292(06)60031-3.
+2.  Creasman WT, Odicino F, Maisonneuve P, Quinn MA, Beller U, Benedet JL, Heintz A, Ngan H, Pecorelli S. Carcinoma of the Corpus Uteri. Int J Gynaecol Obstet. 2006. \doi: 10.1016/S0020-7292(06)60031-3.
 
-3.  Leslie KK, Thiel KW, Goodheart MJ, De Geest K, Jia Y, Yang S. Endometrial cancer.
-    Obstet Gynecol Clin North Am.
-    2012 Jun;39(2):255-68.
-    \doi: 10.1016/j.ogc.2012.04.001.
+3.  Leslie KK, Thiel KW, Goodheart MJ, De Geest K, Jia Y, Yang S. Endometrial cancer. Obstet Gynecol Clin North Am. 2012. \doi: 10.1016/j.ogc.2012.04.001.
 
-4.  Bhatla, N., Berek, J.S., Cuello Fredes, M., Denny, L.A., Grenman, S., Karunaratne, K., Kehoe, S.T., Konishi, I., Olawaiye, A.B., Prat, J.
-    and Sankaranarayanan, R. Revised FIGO staging for carcinoma of the cervix uteri†.
-    2019 Jan; 145: 129-135.
-    \doi: 10.1002/ijgo.12749
+4.  Bhatla, N., Berek, J.S., Cuello Fredes, M., Denny, L.A., Grenman, S., Karunaratne, K., Kehoe, S.T., Konishi, I., Olawaiye, A.B., Prat, J. and Sankaranarayanan, R. Revised FIGO staging for carcinoma of the cervix uteri†. 2019. \doi: 10.1002/ijgo.12749.
+    
+5. Hong JY, An JY, Lee J, Park SH, Park JO, Park YS, Lim HY, Kim KM, Kang WK, Kim ST. Claudin 18.2 expression in various tumor types and its role as a potential target in advanced gastric cancer. Transl Cancer Res. 2020. \doi: 10.21037/tcr-19-1876. 
+
+6. Bianco B, Barbosa CP, Trevisan CM, Laganà AS, Montagna E. Endometrial cancer: a genetic point of view. Transl Cancer Res. 2020. \doi: 10.21037/tcr-20-2334.
