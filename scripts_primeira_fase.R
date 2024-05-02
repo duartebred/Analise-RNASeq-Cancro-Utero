@@ -195,7 +195,7 @@ dim(ddsSE)
 
 
 # filtragem de genes com menos de 15 ocorrências em pelo menos 3 amostras
-genes_manter = rowSums(counts(ddsSE) >= 15) >= 3
+genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
 
@@ -250,14 +250,12 @@ dgeObj = calcNormFactors(dgeObj)
 vital_status = as.factor(amostras_filtradas$vital_status)
 design = model.matrix(~vital_status)
 
+
 # Para estimar a dispersão comum, as dispersões com tendência e as dispersões por tag em uma única execução
 dgeObj = estimateDisp(dgeObj, design = design)
-# visualização da estimativa de dispersão
-plotBCV(dgeObj)
 
 
 fit = glmFit(dgeObj, design)
-head(coef(fit))
 
 lrt = glmLRT(fit, coef=2)
 topTags(lrt)
@@ -288,20 +286,29 @@ abline(h=c(-1, 1), col="blue")
 #RPL22 (12%), TP53 (11%), FGFR2 (11%), and ARID5B (11%).
 
 genes_mutados = c("ENSG00000171862.11", "ENSG00000121879.6", "ENSG00000145675.15", "ENSG00000168036.18",
-                  "ENSG00000117713", "ENSG00000133703.13", "ENSG00000102974.16", "ENSG00000116251.11",
+                  "ENSG00000117713.20", "ENSG00000133703.13", "ENSG00000102974.16", "ENSG00000116251.11",
                   "ENSG00000141510.18", "ENSG00000066468.23", "ENSG00000150347.16")
 
-for (gene in genes_mutados){
-  n_gene_DESEQ2=c(n_gene, which(rownames(resultados)==gene))
-}
-  
-resultados[n_gene_DESEQ2,]
 
+n_gene_edgeR=c()
 for (gene in genes_mutados){
-  n_gene_edgeR=c(n_gene, which(rownames(filtered_results)==gene))
+  n_gene_edgeR=c(n_gene_edgeR, which(rownames(filtered_results)==gene))
 }
-
 filtered_results[n_gene_edgeR,]$table
+
+
+n_gene_DESeq2=c()
+for (gene in genes_mutados){
+  n_gene_DESeq2=c(n_gene_DESeq2, which(rownames(resultados)==gene))
+}
+resultados[n_gene_DESeq2,]
+
+
+# analise dos genes do estudo sinalizados como diferencialmente expressos
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000121879.6"), intgroup="vital_status", pch = 19)
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000133703.13"), intgroup="vital_status", pch = 19)
+
+
 
 #Enriquecimento
 get_entrez <- function(x) {
