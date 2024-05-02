@@ -310,7 +310,7 @@ cat("\n")
 Dado que verficamos a presença de alguns NAs, na fase de realização dos testes de hipóteses, decidimos eliminar as linhas, ou seja, os pacientes, sobre os quais não tínhamos informações relativas aos metadados selecionados.
 Esta trasnformação culminou num total de 574 pacientes em estudo em vez dos 589 iniciais.
 
-```{r, include=FALSE}
+```{r, echo=FALSE}
 metados_sem_nas = na.omit(as.data.frame(amostras_meta_reduzido))
 dim(metados_sem_nas) # passamos de 589 para 574
 ```
@@ -598,12 +598,12 @@ amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
 plot(res_tnse$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 ```
 
-Aplicando a técnica tSNE chegamos á mesma conclusão que haviamos chegado com a técnica de PCA, não havendo uma separação clara entre grupos no que diz respeito ao "figo_stage" e ao "vital_status".
+Aplicando a técnica tSNE chegamos à mesma conclusão que haviamos chegado com a técnica de PCA, não havendo uma separação clara entre grupos no que diz respeito ao "figo_stage" e ao "vital_status".
 
 
 ### 2.Clustering
 
-O clustering é uma técnica de aprendizagem não supervisionada que identifica padrões e a estrutura nos dados, agrupando-os em conjuntos homogêneos. Utiliza medidas de distância ou similaridade para agrupar pontos de dados próximos, procurando maximizar a coesão intra-cluster e a separação inter-cluster. Esses grupos podem revelar insights sobre a estrutura subjacente dos dados.
+O clustering é uma técnica de aprendizagem não supervisionada que identifica padrões e a estrutura nos dados, agrupando-os em conjuntos homogéneos. Utiliza medidas de distância ou similaridade para agrupar pontos de dados próximos, procurando maximizar a coesão intra-cluster e a separação inter-cluster. Esses grupos podem revelar insights sobre a estrutura subjacente dos dados.
 
 No nosso relatório, abordamos dois algoritmos de clustering: K-means, que é um algoritmo de clustering que divide um conjunto de dados em K clusters, minimizando a soma dos quadrados das distâncias entre os pontos e os centroides; clustering hierárquico, que constrói uma árvore de clusters, onde cada nó representa um cluster. 
 
@@ -629,11 +629,11 @@ data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,] #cria uma nova matriz que 
 eucD = dist(data_rna_UCEC_rank)
 ```
 
-Com a finalidade de calcular a matriz euclidiana, procede-se à realização de testes estatísticos t para cada gene, na matriz de dados, determinando diferenças na expressão gênica entre grupos experimentais. De seguida, classificam-se os genes com base nos valores p. Posteriormente, seleciona-se os 30 genes com menores valores p, e cria-se uma nova matriz com as linhas correspondentes a esses genes. Por fim, calcula-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
+Com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de testes estatísticos t para cada gene, na matriz de dados, determinando diferenças na expressão genética entre grupos experimentais. De seguida, classificam-se os genes com base nos valores p. Posteriormente, selecionaram-se os 30 genes com menores valores p, e criou-se uma nova matriz com as linhas correspondentes a esses genes. Por fim, calcula-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
 
 ##### Por genes
 
-Identificamos grupos de genes que têm padrões de expressão semehantes entre os pacientes/amostras. Assim, este agrupamento dá informações sobre a similaridade entre os genes, permitindo identificar genes que são coexpressoes e podem até estar envolvidos em vias metabólicas ou processo semelhante.
+Identificou-se os grupos de genes que têm padrões de expressão semelhantes entre os pacientes/amostras. Assim, este agrupamento dá informações sobre a similaridade entre os genes, permitindo identificar genes que são coexpressos e podem até estar envolvidos em vias metabólicas ou outro processo semelhante.
 
 ```{r, results='hide', warning = FALSE, message=FALSE}
 #(usamos a matriz original - data_rna_LGG_matrix(linhas: genes; colunas: amostras))
@@ -656,7 +656,12 @@ cl.hier3 <- hclust(eucD, method="average")
 plot(cl.hier3,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:average, distância Euclidiana")
 ```
 
+
+Analisando os três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 genes mais diferencialmente expressos, proporcionando confiança nos resultados obtidos, uma vez que, as 3 abordagens distintas dão, em suma, a mesma divisão. Além disso, poderíamos dividir estes 30 genes em 3 subgrupos e a partir daí explorar os genes associados.
+
 ##### Por pacientes
+
+Identificou-se os grupos de pacientes que se assemlham com base no perfil de expressão genético. Este agrupamento dá informações sobre a similaridade entre os pacientes ajudando a descobrir grupos de subgrupos de pacientes com perfis de expressão semelhantes.
 
 ```{r, results='hide', warning = FALSE, message=FALSE}
 #(usamos a matriz transposta - data_rna_LGG_transposed(vice-versa), útil quando o foco é amostras)
@@ -679,12 +684,18 @@ cl.hier6 <- hclust(eucD, method="average")
 plot(cl.hier6,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:average, distância Euclidiana")
 ```
 
+Fazendo uma análise global dos três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 pacientes com um perfil genético mais diferenciado. Todavia, a escolha de clusters nos três tipos de abordagens é mais subjetiva e complicada. Desta forma, não conseguimos garantir uma divisão semelhante em clusters dos 30 pacientes, sendo este um aspecto que poderia causar dificuldade numa futura análise.
+
 ##### Heatmap para os 30 genes
+Construi-se o heatmap para os 30 genes
+
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 heatmap(data_rna_UCEC_rank, labCol = F)
 ```
 
 #### 2.2.k-means
+
+Esta abordagem de clustering  os dados de forma a minimizar as distâncias entre os pontos e centróides dos clusters. Um método muito utilizado para auxiliar na determinação do número adequado de clusters é o “método do cotovelo”. Este método envolve a análise da variação da soma dos quadrados intra-cluster (WSS) em relação ao número de clusters.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 ofs <- c()
@@ -699,7 +710,11 @@ ggplot(plot_data, aes(x = num_clusters, y = wss)) +
   geom_point() +
   labs(x = "Num Clusters", y = "WSS") +
   theme_minimal()
+```
 
+Através da observação do gráfico é possível verificar que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto com K=6.A partir do ponto k=6, a adição de mais clusters não resulta numa redução significativa da WSS. Partindo desse princípio, decidimos aplicar o algoritmo do Kmeans, tendo como referência o valor de 6 centroides, de modo a criar uma tabela que nos permitisse analisar a distribuição dos pacientes nos clusters em relação ao metadado estudado (vital_status).
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
 #compara os clusters resultantes com uma variável categórica dos dados  (Qual o K??)
 resKmeans <- kmeans(t(data_rna_UCEC_matrix),centers=6)
 centroides=resKmeans$cluster
@@ -707,6 +722,7 @@ table_result=table(centroides, ddsSE$vital_status)
 table_result
 ```
 
+Observando a tabela, é possível verificar que existem clusters que têm uma separação diferenciada no que toca ao metadado analisado (vital_status), cumprindo o principal propósito do k-means. Todavia, existem clusters cuja separação não é a ideal.
 
 ## Análise não supervisionada
 
