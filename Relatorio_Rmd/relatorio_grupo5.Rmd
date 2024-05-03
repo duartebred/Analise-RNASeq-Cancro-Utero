@@ -127,14 +127,14 @@ Com o objetivo de analisar os dados de transcriptómica referente ao carcinoma e
 Para esse efeito recorremos ao package TCGAbiolinks, uma vez que este possibilita a interação com a base de dados GDC DataPortal e apresenta várias funções que possibilitam realizar queries à base de dados filtrando os ficheiros que se pretende selecionar para proceder, posteriormente, ao seu download.
 
 ```{r,results= 'markup'}
-query_UCEC = GDCquery(
-  project = "TCGA-UCEC",
-  data.category = "Transcriptome Profiling", 
-  data.type = "Gene Expression Quantification",
-  workflow.type = "STAR - Counts"
-)
-GDCdownload(query=query_UCEC)
-rna_seq_UCEC = GDCprepare(query = query_UCEC, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
+#query_UCEC = GDCquery(
+ # project = "TCGA-UCEC",
+  #data.category = "Transcriptome Profiling", 
+  #data.type = "Gene Expression Quantification",
+  #workflow.type = "STAR - Counts"
+#)
+#GDCdownload(query=query_UCEC)
+#rna_seq_UCEC = GDCprepare(query = query_UCEC, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
 rna_seq_UCEC = get(load("mRNA_TCGA-UCEC.rda"))
 ```
 
