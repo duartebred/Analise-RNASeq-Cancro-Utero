@@ -836,7 +836,7 @@ ggplot(plot_data, aes(x = num_clusters, y = wss)) +
   theme_minimal()
 ```
 
-Através da observação do gráfico é possível verificar que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto K=4. A partir do ponto k=4, a adição de mais clusters não resulta numa redução significativa da WSS.
+Através da observação do gráfico verificou-se que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto K=4. A partir do ponto k=4, a adição de mais clusters não resulta numa redução significativa da WSS.
 Partindo desse princípio, decidiu-se aplicar o algoritmo do K-means, tendo como referência o valor de 4 centróides, de modo a criar uma tabela que permitisse analisar a distribuição dos pacientes nos clusters em relação ao metadado estudado (vital_status).
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
@@ -847,7 +847,7 @@ table_result=table(centroides, ddsSE$vital_status)
 table_result
 ```
 
-Observando a tabela, é possível verificar que existem clusters que têm uma separação diferenciada no que toca ao metadado analisado (vital_status), cumprindo o principal propósito do k-means. Todavia, existem clusters cuja separação não é a ideal.
+Observando a tabela, verificou-ser que existem clusters que têm uma separação diferenciada no que toca ao metadado analisado (vital_status), cumprindo o principal propósito do k-means. Todavia, existem clusters cuja separação não é a ideal.
 
 ## Análise supervisionada
 
