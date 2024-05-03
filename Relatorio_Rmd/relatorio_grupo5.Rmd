@@ -99,11 +99,11 @@ O TCGA é um programa de genómica de referência na área do cancro que, em col
 Os tipos de cancro selecionados para estudo cumprem requisitos tais como ter um mau prognóstico, ter um impacto geral na saúde pública, disponibilidade de amostras com a qualidade e quantidade desejadas, entre outros.
 (National Cancer Institute, 2022)
 
-O cancro endometrial do corpo uterino, um dos cancros incluídos no TCGA, é o sétimo tumor maligno mais frequente no mundo e o quarto mais comum na mulher sendo a doença ginecológica maligna mais prevalente, tendo provocado em 2011 mais de 8 mil mortes [2,3].
+O cancro endometrial do corpo uterino, um dos cancros incluídos no TCGA, é o sétimo tumor maligno mais frequente no mundo e o quarto mais comum na mulher sendo a doença ginecológica maligna dominante, tendo provocado em 2011 mais de 8 mil mortes [2,3].
 De todos os cancros do corpo uterino mais de 83% correspondem a carcinomas do endométrio, enquanto apenas 10% dos diagnósticos são classificados como sarcomas [2].
 Este tipo de cancro tem ganho maior atenção por parte da comunidade científica, uma vez que se verificou um aumento da sua incidência com a agravante de que a taxa de sobrevivência aos 5 anos é consideravelmente menor, em comparação com o ano de 1975, passando de 88% para cerca de 84%, em 2006, indicando um aumento na mortalidade [3].
 A taxa de sobrevivência está fortemente correlacionada com o estádio da doença aquando do diagnóstico, sendo que para pacientes no estádio inicial se considera curável atingindo cerca de 96% de sobrevivência.
-No entanto, para fases mais avançadas e de alto grau, é considerado letal reduzindo drasticamente a taxa de sobrevivência de 96% para 17%.(Costa & Cunha, n.d.)
+No entanto, para fases mais avançadas e de alto grau, é considerado letal reduzindo drasticamente a taxa de sobrevivência de 96% para 17%.
 
 ```{r,echo=FALSE,results= 'markup', warning=FALSE, fig.cap= "Fig 1- Anatomia do sistema reprodutor feminino (Adaptdado de American Society Cancer)",fig.align='center'}
 image=readJPEG("cancro_endometrial.jpg")
@@ -148,7 +148,7 @@ Este workflow indica que o algoritmo utilizado para a contagem da expressão gen
 
 A função **GDCdownload()** é utilizada para realizar o download dos dados consoante a query realizada e estabelecida na função anterior.
 Em seguida, recorreu-se à função **GDCprepare()** com o intuito de gerar um objeto "SummarizedExperiment" de modo a compilar a informação descarregada num único objeto de modo a facilitar a análise dos dados.
-É de notar que a função também permite gravar os dados em formato "rdata" de modo a facilitar o carregamento dos dados através da função **load()**.
+É de notar que a função também permite gravar os dados em formato "Rdata" de modo a facilitar o carregamento dos dados através da função **load()**.
 É importante referir que a utilização deste workflow permite o download simultâneo quer dos dados da expressão genética quer dos metadados associados às amostras e aos genes.
 
 ### 2.2. Análise inicial dos dados
@@ -191,21 +191,20 @@ Para esse efeito, optamos por separar os dados referentes à expressão genétic
 
 ```{r extração da informação}
 #extração da informação da expressão de genes
-geneExp = SummarizedExperiment::assay(rna_seq_UCEC)
+geneExp = SummarizedExperiment::assay(rna_seq_UCEC, "unstranded")
 ```
 
-Com o package **SummarizedExperiment** armazenamos os dados de contagens de sequenciamento de RNA, bem como outros tipos de dados experimentais ómicos, juntamente com metadados relevantes.
-Esses dados de expressão genética extraídos são armazenados na variável geneExp.
-O comando **assay()** é usado para extrair a matriz de contagens (ou matriz de expressão) do objeto SummarizedExperiment.
-Esta matriz contém os dados numéricos de expressão para cada gene em cada amostra, que são essenciais para análises subsequentes, como normalização, análise de expressão diferencial, e outras análises ômicas.
+Com o package **SummarizedExperiment** recorremos ao comando  **assay()** para extrair a matriz de contagens (ou matriz de expressão) do objeto SummarizedExperiment.
+Esta matriz contém os dados numéricos de expressão para cada gene em cada amostra, que são essenciais para análises subsequentes, como normalização, análise de expressão diferencial e análise de enriquecimento.
+
 
 ## 3.Metadados
 
 ### 3.1. Pré-processamento e filtragem
 
-Com o intuito de fazer uma filtragem dos metadados, uma vez que é comum a existência de valores omissos, procedeu-se procedeu-se à diminuição do número de colunas associadas aos metadados, eliminando-se as colunas que possuem mais de 10% de valores omissos.
+Com o intuito de fazer uma filtragem dos metadados, uma vez que é comum a existência de valores omissos, procedeu-se à diminuição do número de colunas associadas aos metadados, eliminando-se as colunas que possuem mais de 10% de valores omissos.
 Com esta abordagem vamos eliminar metadados que, por possuirem um número de NAs que definimos como limite, não constituem interesse para o nosso estudo.
-Assim, removemos as colunas dos metadados onde havia mais de 60 elementos como: "not/Not reported/Reported" e/ou "NA.
+Assim, removemos as colunas dos metadados onde havia mais de 60 elementos como "not/Not reported/Reported" e/ou "NA.
 
 ```{r, echo=TRUE}
 
@@ -217,25 +216,23 @@ amostras_meta_reduzido = amostras_metadados[, -c(rm_not_reported, rm_Not_Reporte
 dim(amostras_meta_reduzido)
 ```
 
-Com esta filtragem obtivemos 50 colunas, em vez das 78 iniciais.É possível realizar uma filtragem ainda mais profunda dos metadados, porém estabeleceu-se nesta fase inicial uma percentagem fixa de valores omissos a eliminar.
+Com esta filtragem foi possível diminuir o número de colunas de 78 para 50 garantindo assim que os parâmetros utilizados para posterior analise abrangem a maioria das amostras.
 
-### 3.2. Análise Descritiva Exploratória
+### 3.2. Análise Descritiva e Exploratória {.tabset}
 
-Para o nosso estudo, de entre as 50 colunas de metadados filtradas, selecionamos 4 variáveis de caraterísticas distintas, nomeadamente as colunas "vital_status", "primary_diagnosis", "age_at_index", "figo_stage", procedendo ainda a uma transformação desta última coluna que será explicada adiante.
+Para o nosso estudo, de entre as 50 colunas de metadados filtradas, selecionamos 4 variáveis de caraterísticas distintas, nomeadamente as colunas "vital_status", "primary_diagnosis", "age_at_index" e "figo_stage".
 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 # seleção apenas das colunas de interesse e transformação da coluna figo_stage
 amostras_meta_reduzido = amostras_meta_reduzido[,c("vital_status","primary_diagnosis","age_at_index","figo_stage")]
 amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_meta_reduzido$figo_stage)
 
 ```
 
-### 3.3. Análise Exploratória {.tabset}
-
 #### Estado Vital
 
-A coluna "vital_status", incorpora uma variável nominal e dá-nos informações sobre a sobrevivência do paciente com cancro e apresenta 3 categorias possívies: "Alive", "Dead", "NA".
-Neste caso verificamos que, no momento de recolha dos dados, dos 589 pacientes, aproximadamente 81% estavam vivos e 16% tinham falecido, acerca dos restantes não havia informação disponível, sendo reportados como "NAs".
+A coluna "vital_status", incorpora uma variável nominal  que representa a sobrevivência do paciente com cancro. Esta variável possui 3 categorias distintas: "Alive", "Dead", "NA".
+Neste dataset verificou-se que, no momento de recolha das amostras, dos 589 pacientes, aproximadamente 81% estavam vivos e 16% tinham falecido, acerca dos restantes não havia informação disponível, sendo reportados como "NAs".
 
 ```{r, echo=FALSE}
 # vital_status
@@ -247,10 +244,10 @@ barplot(tabela_vital, names.arg= c("Alive","Dead","NAs"), col= "lightblue", ylab
 #### Diagnóstico Primário
 
 A coluna "primary_diagnosis", corresponde a uma variável nominal, e descreve o diagnóstico histológico do paciente, de acordo com a Classificação Internacional de Doenças para Oncologia (International Classification of Diseases for Oncology, ICD-O) da Organização Mundial da Saúde.
-Apresenta 8 categorias possíveis "Adenocarcinoma, NOS","Carcinoma, undifferentiated, NOS","Clear cell adenocarcinoma, NOS","Endometrioid adenocarcinoma, NOS","Endometrioid adenocarcinoma, secretory variant","Papillary serous cystadenocarcinoma","Serous cystadenocarcinoma, NOS","Serous surface papillary carcinoma".
+Apresenta 8 categorias possíveis "Adenocarcinoma, NOS", "Carcinoma, undifferentiated, NOS", "Clear cell adenocarcinoma, NOS", "Endometrioid adenocarcinoma, NOS", "Endometrioid adenocarcinoma, secretory variant", "Papillary serous cystadenocarcinoma", "Serous cystadenocarcinoma, NOS", "Serous surface papillary carcinoma".
 A desginação "NOS", Not Otherwise Specified, apenas indica que com base nas informações disponíveis, um determinado tipo de cancro não pode ser encaixado noutra categoria mais específica.
-Verificamos que os dados vão de encontro à literatura, identificando o adenocarcinoma do endométrio como prevalente neste estudo, com cerca de 71.8% de pacientes diagnosticados com este tipo de cancro do corpo uterino.
-Logo de seguida temos 24.3% de pacientes com cistoadenocarcinomas serosos e 3.9% com outros tipos de cancro que agrupamos na categoria "Outros", incluindo os casos em que não se sabe a categoria("NA").
+Verificou-se que os dados vão de encontro à literatura, sendo o adenocarcinoma do endométrio o tipo de cancro prevalecente neste estudo, com cerca de 71.8% das pacientes diagnosticadas com este tipo de cancro do corpo uterino.
+Logo de seguida temos 24.3% das pacientes com cistoadenocarcinomas serosos e 3.9% com outros tipos de cancro que agrupamos na categoria "Outros", incluindo os casos em que não se sabe a categoria ("NA").
 
 ```{r, echo=FALSE}
 # primary_diagnosis
@@ -267,11 +264,12 @@ pie(primary_comprimido, labels = paste(labels_primary, sprintf("%.1f%%", primary
 #### Estádio FIGO
 
 A coluna "figo_stage", incorpora uma variável ordinal que representa o estádio do cancro, nomeadamente no que diz respeito à sua extensão, especialmente se a doença se espalhou do local original para outras partes do corpo, conforme descrito pelos estádios da Federação Internacional de Ginecologia e Obstetrícia (FIGO) [4].
-Originalmente, esta classificação está dividia em 4 estádios principais, nomeadamente, estádio I onde o tumor está confinado ao corpo uterino, estádio II onde já existe envolvimento do cérvix/colo uterino, estádio III que representa um atingimento de estruturas adjacentes do mesmo orgão como por exemplo os gânglios linfáticos da zona pélvica e, por último, o estádio IV onde já existem metásteses noutros orgãos como por exemplo no intestino.
-Para além desta classificação em 4 estádios gerais, cada um destes estádios se encontra subdividido em dois ou mais estádios consoante a extensão a outras estrututras.
-Neste estudo, para conseguirmos visualizar os dados de forma mais eficiente, e dado o objetivo deste trabalho, decidimos proceder a uma transformação desta coluna, agrupando os diferentes sub-estádios nas suas 4 categorias principais.
-Desta forma, esta variável toma 4 níveis "STAGE I", "STAGE II", "STAGE III" e "STAGE IV", sendo que 60.3% das amostras são de tumores em "STAGE I", 9.2% em "STAGE II", 23.3% em "STAGE III", 5.3% em "STAGE IV" e exitem ainda 2% de amostras que não possuem classificação quanto ao estádio.
-Ou seja, mais de metade dos tumores em estudo são confinados ao corpo uterino, e uma parte considerável correspondem a tumores mais agressivos, com atingimento de estruturas adjacentes ao orgão reprodutor feminino (23.3%) ou com atingimento de outros orgãos (5.3%).
+Esta classificação está dividia em 4 estádios principais, nomeadamente, estádio I onde o tumor está confinado ao corpo uterino, estádio II onde já existe envolvimento do cérvix/colo uterino, estádio III que representa um atingimento de estruturas adjacentes do mesmo órgão, como, por exemplo, os gânglios linfáticos da zona pélvica. Por último, o estádio IV corresponde ao estado de doença em que já existem metástases noutros órgãos como por exemplo no intestino.
+
+Para além desta classificação em 4 estádios gerais, cada um destes estádios encontra-se subdividido em dois ou mais estádios consoante a extensão a outras estrututras.
+Neste estudo, para conseguirmos visualizar os dados de forma mais eficiente, e dado o objetivo deste trabalho, decidiu-se proceder a uma transformação desta coluna, agrupando os diferentes sub-estádios nas suas 4 categorias principais.
+Desta forma, esta variável toma 4 níveis "STAGE I", "STAGE II", "STAGE III" e "STAGE IV", sendo que 60.3% das amostras são de tumores em "STAGE I", 9.2% em "STAGE II", 23.3% em "STAGE III", 5.3% em "STAGE IV" e existem ainda 2% de amostras que não possuem classificação quanto ao estádio.
+Com isto conclui-se que, mais de metade dos tumores em estudo, são confinados ao corpo uterino, e uma parte considerável correspondem a tumores mais agressivos, com extensão para estruturas adjacentes ao órgão reprodutor feminino (23.3%) ou com atingimento de outros órgãos (5.3%).
 
 ```{r, echo=FALSE}
 # figo_stage
@@ -284,8 +282,8 @@ pie(tabela_figo, labels = paste(labels_figo, sprintf("%.1f%%", tabela_figo)), co
 
 #### Idade dos Pacientes
 
-A coluna "age_at_index", corresponde a uma variável proporcional contínua, e representa a idade dos pacientes do estudo.
-Podemos verificar que a idade dos pacientes varia entre os 31 e os 90 anos, sendo que a maioria das idades está compreendida entre os 57 e os 71 anos e metade dos pacientes têm 64 ou menos anos.
+A coluna "age_at_index", corresponde a uma variável proporcional contínua, e representa a idade das pacientes do estudo.
+Verificou-se que a idade das pacientes varia entre os 31 e os 90 anos, sendo que a maioria das idades está compreendida entre os 57 e os 71 anos e metade dos pacientes têm 64 ou menos anos.
 De acresentar que existem 15 pacientes acerca dos quais não se sabe a idade.
 
 ```{r, echo=FALSE}
@@ -311,7 +309,7 @@ metados_sem_nas = na.omit(as.data.frame(amostras_meta_reduzido))
 dim(metados_sem_nas) # passamos de 589 para 574
 ```
 
-### 3.4. Testes de hipótese
+### 3.3. Testes de hipótese
 
 **Nota:** para todos os testes estatísticos abaixo realizados, considere-se um valor de prova igual a 0.05.
 
