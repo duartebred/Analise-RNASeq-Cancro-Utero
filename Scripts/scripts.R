@@ -194,7 +194,6 @@ sum(is.na(amostras_filtradas$vital_status))
 amostras_filtradas$vital_status = factor(amostras_filtradas$vital_status)
 
 ddsSE = DESeqDataSetFromMatrix(countData = dados_EA, colData = amostras_filtradas, design = ~vital_status)
-dim(ddsSE)
 
 
 # filtragem de genes com menos de 15 ocorrências em pelo menos 3 amostras
