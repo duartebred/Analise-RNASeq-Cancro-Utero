@@ -785,7 +785,7 @@ Desta forma, não se garante uma divisão semelhante em clusters dos 30 paciente
 ##### Por genes
 
 Identificou-se os grupos de genes que têm padrões de expressão semelhantes entre os pacientes/amostras.
-Assim, este agrupamento dá informações sobre a similaridade entre os genes, permitindo identificar genes que são coexpressos e que podem estar envolvidos em vias metabólicas ou noutro processo similar.
+Este agrupamento dá informações sobre a similaridade entre os genes, permitindo identificar genes que são coexpressos e que podem estar envolvidos em vias metabólicas ou noutro processo similar.
 
 ```{r, results='hide'}
 #(usamos a matriz original - data_rna_LGG_matrix(linhas: genes; colunas: amostras))
