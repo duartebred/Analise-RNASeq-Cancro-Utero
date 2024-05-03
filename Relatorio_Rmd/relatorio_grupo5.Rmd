@@ -311,7 +311,7 @@ dim(metados_sem_nas) # passamos de 589 para 574
 
 ### 3.3. Testes de hipótese
 
-**Nota:** para todos os testes estatísticos abaixo realizados, considere-se um valor de prova igual a 0.05.
+**Nota:** para todos os testes estatísticos abaixo realizados, considerou-se um valor de prova igual a 0.05.
 
 Ainda dentro da análise exploratória dos dados, através do boxplot "Idade do Paciente por Estádio FIGO" conseguimos, visualmente, constatar que a mediana das idades em pacientes com tumor no estádio IV é maior que as restantes, o que pode indicar uma relação entre a idade avançada e o estádio do tumor no que diz respeito à sua gravidade.
 Entre os restantes estádios não se verifica, visualmente, uma diferença tão notória na mediana.
@@ -323,17 +323,18 @@ boxplot(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage, horizontal = T,
         col=c("lightcoral","indianred","tomato",'red')) #verificação visual dos vários grupos
 ```
 
-Passando aos testes estatísticos, para as hipóteses definidas como:
+Passando aos testes estatísticos, defeniram.se as seguintes hipóteses:
 
 ::: {style="text-align: center;"}
 H0: Não existem diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
-H1: Existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
+
+H1: Existem diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
 :::
 
-Através do **shapiro.test()** verificamos que os dados da variável "age_at_index" não são normais (p.value\<0.05).
-No entanto, através da análise do Q-Q Plot, com sobreposição da linha qqline, verificamos que os pontos estão, na sua maioria, sobrepostos à linha diagonal e apenas as extremidades se afastam abaixo e acima da diagonal.
-Para além disso, estamos perante um grande volume de dados (n=574), ou seja, de acordo com o teorema do limite central, podemos aceitar a normalidade dos dados apesar de o valor de p-value do teste de shapiro nos levar a rejeitar a hipótese nula.
-Garantindo a normalidade e a homogenidade das variâncias, procedemos à análise **anova one way** para verificarmos se existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios e obtivemos um valor de prova de 0.722, o que nos leva a não rejeitar a hipótese nula, ou seja, não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
+Através do **shapiro.test()** verificou-se que os dados da variável "age_at_index" não são normais (p.value\<0.05).
+No entanto, através da análise do Q-Q Plot, com sobreposição da linha qqline, verificou-se que os pontos estão, na sua maioria, sobrepostos à linha diagonal e apenas as extremidades se afastam abaixo e acima da diagonal.
+Para além disso, estamos perante um grande volume de dados (n=574), ou seja, de acordo com o teorema do limite central, aceita-se a normalidade dos dados apesar de o valor de p-value do teste de shapiro  resultar na rejeição da hipótese nula.
+Garantindo a normalidade e a homogenidade das variâncias, procedeu-se à análise **anova one way** para verificar se existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios e obteve-se um valor de prova de 0.722, o que não permite rejeitar a hipótese nula, ou seja, não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
 
 ```{r, echo=FALSE}
 shapiro.test(metados_sem_nas$age_at_index) # teste à normalidade dos dados
@@ -341,14 +342,14 @@ qqnorm(metados_sem_nas$age_at_index) # visualização da normalidade através do
 qqline(metados_sem_nas$age_at_index)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 # Teste de Bartlett para verificar homogeneidade das variâncias
 #H0: as variâncias são homogénas
 #H1: as variâncias não são homogénas
 bartlett.test(metados_sem_nas$age_at_index ~ metados_sem_nas$figo_stage)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 #H0: Não há diferença estatisticamente significativa na média das idades dos pacientes entre os diferentes estádios FIGO
 #H1: Há diferença estatisticamente significativa na média das idades dos pacientes entre os diferentes estádios FIGO
 aov_FIGO = aov(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage)
@@ -356,23 +357,16 @@ summary(aov_FIGO)
 boxplot(aov_FIGO$residuals, horizontal = T, main= "Análise dos resíduos- estádio FIGO" ) # verificação da homogeneidade das variâncias
 ```
 
-Ainda assim, procedemos à realização do teste não paramétrico **kruskal.test()** para vermos se os resultados seriam os mesmos e, mais uma vez, obtivemos um valor de prova de 0.6632 que não nos permite rejeitar a hipótese de que não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
+Procedeu-se à realização do teste não paramétrico **kruskal.test()** para concluir se os resultados seriam os mesmos e, mais uma vez, obtivemos um valor de prova de 0.6632 que não permite rejeitar a hipótese de que não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
 
 ```{r}
 kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage) # teste não parametrico
 ```
 
 No que diz respeito ao estado de sobrevivência dos pacientes, vital_status, visualmente é transmitida a ideia de que os pacientes que já faleceram tinham uma idade mais avançada.
-Através do teste anova one way,para as hipóteses definidas como:
+Através do teste anova one way, para as hipóteses definidas verificou-se que a hipótese nula é rejeitada (p value= 6.13e-05), ou seja, existem diferenças estatisticamente significativas entre a idade dos pacientes nos diferentes grupos "Alive" e "Dead".
 
-::: {style="text-align: center;"}
-H0: Não existem diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida.
-H1: Existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida.
-:::
-
-verificamos que a hipótese nula é rejeitada (p value= 6.13e-05), ou seja, existem diferenças estatisticamente significativas entre a idade dos pacientes nos diferentes grupos "Alive" e "Dead".
-
-```{r, echo=FALSE}
+```{r, echo=TRUE}
 #idade dos pacientes em função do estado vital
 # Teste de Bartlett para verificar homogeneidade das variâncias
 #H0: as variâncias são homogénas
@@ -392,7 +386,7 @@ summary(aov_estado_vital)
 boxplot(aov_estado_vital$residuals, horizontal = T , main= "Análise dos resíduos- estado vital") # verificação da homogeneidade das variâncias
 ```
 
-Realizamos também para este caso o teste não paramétrico kruskal.test() e obtivemos um valor de prova de 0.0001071 que nos permite rejeitar a hipótese de que não há diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida ("Alive" e "Dead").
+Realizou-se também para este caso o teste não paramétrico kruskal.test() e obtivemos um valor de prova de 0.0001071 que leva à rejeição da hipótese de que não há diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida ("Alive" e "Dead").
 
 ```{r, echo=FALSE}
 kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$vital_status) # teste não parametrico
