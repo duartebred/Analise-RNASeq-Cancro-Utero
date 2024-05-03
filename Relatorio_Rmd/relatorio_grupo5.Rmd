@@ -417,19 +417,18 @@ Para isso eliminou-se do dataset todos aqueles genes que não possuíam pelo men
 Após a etapa do pré-processamento, o dataset final apresenta cerca de 28 mil genes e 423 amostras e, com o dataset filtrado, realizou-se a criação do objeto DESeqDataSet, em que se utilizou o fator "vital_status" como uma variável explicativa do modelo.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
-dados_sem_nas = rna_seq_UCEC[,!is.na(rna_seq_UCEC$primary_diagnosis)]
-amostras_EA = dados_sem_nas$primary_diagnosis == "Endometrioid adenocarcinoma, NOS" 
-dados_EA = dados_sem_nas[,amostras_EA]
+amostras_filtradas = amostras_metadados[!is.na(amostras_metadados$primary_diagnosis),]
+amostras_filtradas = amostras_filtradas[amostras_filtradas$primary_diagnosis =="Endometrioid adenocarcinoma, NOS",]
+dados_EA = geneExp[,rownames(amostras_filtradas)]
 dim(dados_EA)
 
-gene_exp_filtrado = dados_EA[,!is.na(dados_EA$vital_status)] 
-gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
-ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
-dim(ddsSE)
+sum(is.na(amostras_filtradas$vital_status))
+amostras_filtradas$vital_status = factor(amostras_filtradas$vital_status)
 
-ddsSE = ddsSE[rowSums(counts(ddsSE)) > 0, ]
-dim(ddsSE)
+ddsSE = DESeqDataSetFromMatrix(countData = dados_EA, colData = amostras_filtradas, design = ~vital_status)
 
+
+# filtragem de genes com menos de 15 ocorrências em pelo menos 3 amostras
 genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
@@ -493,11 +492,13 @@ A normalização do tamanho das librarias é importante para garantir que as dif
 ```{r}
 # normalização dos dados das contagens
 dados_EA_CPM = cpm(dados_EA)
+dim(dados_EA_CPM)
 
 #filtragem dos genes que possuem valores de cpm superiores a 0.5 em pelo menos 2 amostras
 min_exp = dados_EA_CPM > 0.5
 keep_rows =  rowSums(min_exp) >= 2
 dados_EA_CPM_filt = dados_EA_CPM[keep_rows,]
+dim(dados_EA_CPM_filt)
 
 #criação do objeto dbe
 dgeObj = DGEList(dados_EA_CPM_filt)
