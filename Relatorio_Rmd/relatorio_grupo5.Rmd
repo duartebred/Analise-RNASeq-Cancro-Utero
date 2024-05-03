@@ -740,6 +740,11 @@ Este tipo de clustering baseia-se na probabilidade de pertencer a um grupo e seg
 A análise do cluster hierárquico usa a distância Euclidiana para calcular a proximidade entre os pontos num espaço multidimensional, considerando todas as dimensões.
 Após se calcular a matriz Euclidiana, diferentes métodos podem ser utilizados para calcular a distância entre os clusters, como por exemplo: single linkage, complete linkage ou average linkage. Além disso, pode-se aplicar esta técnica agrupando-se genes ou pacientes.
 
+##### Por pacientes
+
+Identificou-se os grupos de pacientes que se assemelham com base no perfil de expressão genético.
+Este agrupamento dá informações sobre a similaridade entre os pacientes ajudando a descobrir grupos de subgrupos de pacientes com perfis de expressão semelhantes.
+
 ```{r, results='hide'}
 #teste estatístico para cada gene na matriz de dados de RNA. Determina se há diferenças significativas na expressão genética entre diferentes condições ou grupos experimentais
 tt_mdr = rowttests(data_rna_UCEC_transposed) 
@@ -759,70 +764,62 @@ Com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de
 De seguida, classificou-se os genes com base nos seu p-values. Posteriormente, selecionou-se os 30 genes com menores valores p, e criou-se uma nova matriz com as linhas correspondentes a esses genes.
 Por fim, calculou-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
 
+```{r, results='hide'}
+#complete
+cl.hier1 <- hclust(eucD)
+plot(cl.hier4,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:complete, distância Euclidiana")
+
+#single
+cl.hier2 <- hclust(eucD, method="single")
+plot(cl.hier5,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:single, distância Euclidiana")
+
+#average
+cl.hier3 <- hclust(eucD, method="average")
+plot(cl.hier6,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:average, distância Euclidiana")
+```
+
+Analisou-se os três métodos de medida de distância entre os clusters, e conclui-se que em todos se verifica a presença dos mesmos 30 pacientes com um perfil genético mais diferenciado.
+Contudo, a escolha de clusters nos três tipos de abordagens é mais subjetiva e complicada.
+Desta forma, não se garante uma divisão semelhante em clusters dos 30 pacientes, sendo este um aspecto que pode causar dificuldade numa futura análise.
+
 ##### Por genes
 
 Identificou-se os grupos de genes que têm padrões de expressão semelhantes entre os pacientes/amostras.
-Assim, este agrupamento dá informações sobre a similaridade entre os genes, permitindo identificar genes que são coexpressos e podem até estar envolvidos em vias metabólicas ou outro processo semelhante.
+Assim, este agrupamento dá informações sobre a similaridade entre os genes, permitindo identificar genes que são coexpressos e que podem estar envolvidos em vias metabólicas ou noutro processo similar.
 
-```{r, results='hide', warning = FALSE, message=FALSE}
+```{r, results='hide'}
 #(usamos a matriz original - data_rna_LGG_matrix(linhas: genes; colunas: amostras))
 tt_mdr_g = rowttests(data_rna_UCEC_matrix)
 rank_de_mdr_g = order(tt_mdr_g$p.value)
 genes_de_mdr_g = rank_de_mdr_g[1:30]
 data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,]
-eucD = dist(data_rna_UCEC_rank)
+eucD1 = dist(data_rna_UCEC_rank)
+```
 
+À semelhança do que foi feito anteriormente, para os pacientes, com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de testes estatísticos ttest para cada gene, na matriz de dados, determinando diferenças na expressão genética entre grupos experimentais.
+De seguida, classificou-se os genes com base nos seu p-values. Posteriormente, selecionou-se os 30 genes com menores valores p, e criou-se uma nova matriz com as linhas correspondentes a esses genes.
+Por fim, calculou-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
+
+```{r, results='hide'}
 #complete
-cl.hier <- hclust(eucD)
+cl.hier4 <- hclust(eucD1)
 plot(cl.hier,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:complete, distância Euclidiana")
 
 #single
-cl.hier2 <- hclust(eucD, method="single")
+cl.hier5 <- hclust(eucD1, method="single")
 plot(cl.hier2,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:single, distância Euclidiana")
 
 #average
-cl.hier3 <- hclust(eucD, method="average")
+cl.hier6 <- hclust(eucD1, method="average")
 plot(cl.hier3,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:average, distância Euclidiana")
 ```
 
-Analisando os três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 genes mais diferencialmente expressos, proporcionando confiança nos resultados obtidos, uma vez que, as 3 abordagens distintas dão, em suma, a mesma divisão.
-Além disso, poderíamos dividir estes 30 genes em 3 subgrupos e a partir daí explorar os genes associados.
+Analisando os três métodos de medida de distância entre os clusters, conclui-se que em todos se verifica a presença dos mesmos 30 genes mais diferencialmente expressos, proporcionando confiança nos resultados obtidos, uma vez que, as 3 abordagens distintas dão, em suma, a mesma divisão.
 
-##### Por pacientes
-
-Identificou-se os grupos de pacientes que se assemlham com base no perfil de expressão genético.
-Este agrupamento dá informações sobre a similaridade entre os pacientes ajudando a descobrir grupos de subgrupos de pacientes com perfis de expressão semelhantes.
-
-```{r, results='hide', warning = FALSE, message=FALSE}
-#(usamos a matriz transposta - data_rna_LGG_transposed(vice-versa), útil quando o foco é amostras)
-tt_mdr = rowttests(t(data_rna_UCEC_matrix))
-rank_de_mdr = order(tt_mdr$p.value)
-genes_de_mdr = rank_de_mdr[1:30]
-data_rna_UCEC_rank = data_rna_UCEC_transposed[genes_mdr,]
-eucD = dist(data_rna_UCEC_rank)
-
-#complete
-cl.hier4 <- hclust(eucD)
-plot(cl.hier4,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:complete, distância Euclidiana")
-
-#single
-cl.hier5 <- hclust(eucD, method="single")
-plot(cl.hier5,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:single, distância Euclidiana")
-
-#average
-cl.hier6 <- hclust(eucD, method="average")
-plot(cl.hier6,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:average, distância Euclidiana")
-```
-
-Fazendo uma análise global dos três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 pacientes com um perfil genético mais diferenciado.
-Todavia, a escolha de clusters nos três tipos de abordagens é mais subjetiva e complicada.
-Desta forma, não conseguimos garantir uma divisão semelhante em clusters dos 30 pacientes, sendo este um aspecto que poderia causar dificuldade numa futura análise.
 
 #### 2.2.k-means
 
-Esta abordagem de clustering os dados de forma a minimizar as distâncias entre os pontos e centróides dos clusters.
-Um método muito utilizado para auxiliar na determinação do número adequado de clusters é o “método do cotovelo”.
-Este método envolve a análise da variação da soma dos quadrados intra-cluster (WSS) em relação ao número de clusters.
+Esta abordagem de clustering, agrupa os dados de forma a minimizar as distâncias entre os pontos e centróides dos clusters. Um método muito utilizado para auxiliar na determinação do número adequado de clusters é o “método do cotovelo”. Este método envolve a análise da variação da soma dos quadrados intra-cluster (WSS) em relação ao número de clusters.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 ofs <- c()
@@ -839,8 +836,8 @@ ggplot(plot_data, aes(x = num_clusters, y = wss)) +
   theme_minimal()
 ```
 
-Através da observação do gráfico é possível verificar que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto com K=4.A partir do ponto k=4, a adição de mais clusters não resulta numa redução significativa da WSS.
-Partindo desse princípio, decidimos aplicar o algoritmo do Kmeans, tendo como referência o valor de 4 centróides, de modo a criar uma tabela que nos permitisse analisar a distribuição dos pacientes nos clusters em relação ao metadado estudado (vital_status).
+Através da observação do gráfico é possível verificar que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto K=4. A partir do ponto k=4, a adição de mais clusters não resulta numa redução significativa da WSS.
+Partindo desse princípio, decidiu-se aplicar o algoritmo do K-means, tendo como referência o valor de 4 centróides, de modo a criar uma tabela que permitisse analisar a distribuição dos pacientes nos clusters em relação ao metadado estudado (vital_status).
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 #compara os clusters resultantes com uma variável categórica dos dados  (Qual o K??)
@@ -850,8 +847,7 @@ table_result=table(centroides, ddsSE$vital_status)
 table_result
 ```
 
-Observando a tabela, é possível verificar que existem clusters que têm uma separação diferenciada no que toca ao metadado analisado (vital_status), cumprindo o principal propósito do k-means.
-Todavia, existem clusters cuja separação não é a ideal.
+Observando a tabela, é possível verificar que existem clusters que têm uma separação diferenciada no que toca ao metadado analisado (vital_status), cumprindo o principal propósito do k-means. Todavia, existem clusters cuja separação não é a ideal.
 
 ## Análise supervisionada
 
