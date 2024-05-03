@@ -433,6 +433,7 @@ genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
 
+
 ddsSE_norm = DESeq(ddsSE)
 resultados = results(ddsSE_norm, alpha = 0.05)
 
