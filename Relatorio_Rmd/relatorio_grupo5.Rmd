@@ -672,7 +672,7 @@ Ambas têm como objetivo reduzir a complexidade dos dados, eliminando a redundâ
 **Refazer tudo e tirar novas concluões**
 
 ```{r, echo=FALSE}
-pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
+pcares1 = prcomp(dados_EA_CPM, scale = F)
 summary(pcares1)$importance[3, ]
 
 min(which(summary(pcares1)$importance[3,]>0.95))
