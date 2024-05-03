@@ -1,0 +1,900 @@
+---
+title: "Carcinoma do endométrio do corpo uterino"
+author: "Duarte Velho(pg53841), Joana Lopes(pg53498), João Ferreira(pg52182), Ricardo Oliveira(pg53501)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+  pdf_document: default
+encoding: "UTF-8"
+editor_options:
+  markdown:
+    wrap: sentence
+---
+
+```{=html}
+<style>
+  p {
+    text-align: justify;
+  }
+</style>
+```
+```{r setup, include=FALSE, warning = FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Este trabalho foi desenvolvido no âmbito da UC Extração de Conhecimentos de Dados Biológicos (2023/24), do Mestrado em Bioinformática da Escola de Engenharia da Universidade do Minho, e tem como objetivo principal analisar, através das ferramentas R e packages do Bioconductor, um conjunto de dados, acedidos a partir do GDC PortalData, relacionados com o Carcinoma Endometrial do Corpo Uterino.
+Será dividido em duas fases.
+
+# 1ª Parte
+
+A primeira fase deste trabalho será constituída pelas seguintes etapas: - explicação dos dados, sua origem e relevância; - tarefas de preparação e de pré-processamento dos dados; - sumarização dos dados (estatística descritiva, exploração com recurso a gráficos); - análise estatística univariada e análise de expressão diferencial e de enriquecimento.
+
+## Instalação e importação de packages
+
+Nesta secção são destacados todos os packages utilizados no trabalho, que facilitam a aquisição e análise de dados ao longo do documento, tornando mais eficiente a obtenção e compreensão das informações relevantes.
+
+```{r, results='hide', warning = FALSE, message=FALSE}
+#install.packages("BiocManager")
+#install.packages("jpeg")
+#install.packages("TCGAbiolinks")
+#install.packages("Biobase")
+#install.packages("DESeq2")
+#install.packages("ggbeeswarm")
+#install.packages("genefilter")
+#install.packages("pheatmap")
+#install.packages("org.Hs.eg.db")
+#install.packages("fgsea")
+#install.packages("ggplot2")
+#install.packages("xfun")
+#install.packages("SummarizedExperiment") 
+#install.packages("factoextra")
+#install.packages("Rtsne")
+#install.packages("Glimma")
+#install.packages("gplots")
+#install.packages("edgeR")
+#install.packages("AnnotationDbi")
+#install.packages("RColorBrewer")
+#install.packages("tidyverse")
+#install.packages("rpart")
+#install.packages("rsample")
+#install.packages("caret")
+```
+
+```{r,results='hide', warning = FALSE, message=FALSE}
+library(BiocManager)
+library(jpeg)
+library(TCGAbiolinks)
+library(Biobase)
+library(DESeq2)
+library(ggbeeswarm)
+library(genefilter)
+library(pheatmap)
+library(org.Hs.eg.db)
+library(fgsea)
+library(ggplot2)
+library(xfun)
+library(SummarizedExperiment) 
+library(factoextra)
+library(Rtsne)
+library(Glimma)
+library(gplots)
+library(edgeR)
+library(AnnotationDbi)
+library(RColorBrewer)
+library(tidyverse)
+library(rpart)
+library(rsample)
+library(caret)
+```
+
+## 1.Introdução
+
+### 1.1 Enquadramento
+
+Nos dias de hoje, o cancro é uma das principais causas de morte a nível mundial, sendo que, segundo a Organização Mundial da Saúde (OMS), em 2020, foram diagnosticados cerca de 19,3 milhões de novos casos de cancro, que resultaram na morte, de aproximadamente 10 milhões de pessoas [1].
+O preocupante aumento da incidência do cancro ao longo das últimas décadas, levou ao surgimento de iniciativas, tal como a PanCancer Atlas, que visam encontrar respostas para as grandes e abrangentes questões sobre o cancro, através da análise de tumores caracterizados no conjunto de dados resultantes do projeto de The Cancer Genome Atlas (TCGA).
+O TCGA é um programa de genómica de referência na área do cancro que, em colaboração com o Instituto Nacional do Cancro (NCI) e o Instituto Nacional de Pesquisa do Genoma Humano (NHGRI) dos Estados Unidos, caracterizou mais de 20 mil cancros primários abrangendo 33 tipos de cancro.
+Os tipos de cancro selecionados para estudo cumprem requisitos tais como ter um mau prognóstico, ter um impacto geral na saúde pública, disponibilidade de amostras com a qualidade e quantidade desejadas, entre outros.
+(National Cancer Institute, 2022)
+
+O cancro endometrial do corpo uterino, um dos cancros incluídos no TCGA, é o sétimo tumor maligno mais frequente no mundo e o quarto mais comum na mulher sendo a doença ginecológica maligna mais prevalente, tendo provocado em 2011 mais de 8 mil mortes [2,3].
+De todos os cancros do corpo uterino mais de 83% correspondem a carcinomas do endométrio, enquanto apenas 10% dos diagnósticos são classificados como sarcomas [2].
+Este tipo de cancro tem ganho maior atenção por parte da comunidade científica, uma vez que se verificou um aumento da sua incidência com a agravante de que a taxa de sobrevivência aos 5 anos é consideravelmente menor, em comparação com o ano de 1975, passando de 88% para cerca de 84%, em 2006, indicando um aumento na mortalidade [3].
+A taxa de sobrevivência está fortemente correlacionada com o estádio da doença aquando do diagnóstico, sendo que para pacientes no estádio inicial se considera curável atingindo cerca de 96% de sobrevivência.
+No entanto, para fases mais avançadas e de alto grau, é considerado letal reduzindo drasticamente a taxa de sobrevivência de 96% para 17%.(Costa & Cunha, n.d.)
+
+```{r,echo=FALSE,results= 'markup', warning=FALSE, fig.cap= "Fig 1- Anatomia do sistema reprodutor feminino (Adaptdado de American Society Cancer)",fig.align='center'}
+image=readJPEG("cancro_endometrial.jpg")
+# Definir margens para zero
+par(mar = c(0, 0, 0, 0))  
+# Criar um gráfico sem eixos
+plot(0, 0, type = "n", xlim = c(0, 1), ylim = c(0, 1), xlab = "", ylab = "", axes = FALSE)
+rasterImage(image, 0, 0, 1, 1)
+```
+
+### 1.2. Objetivo
+
+Com base na problemática apresentada, este trabalho tem como objetivo analisar o perfil transcriptómico de células endometeriais do corpo uterino de pacientes diagnosticados com cancro para determinadas condições descritas nos metadados, de modo a realizar a análise da expressão diferencial com o intuito de compreender qual o efeito do fator no perfil transcriptómico das células e como esse perfil se traduz na gravidade da doença observada.
+Os dados utilizados neste trabalho estão disponíveis no [GDC DataPortal](https://shorturl.at/fmpJ5).
+
+## 2.Extração dos dados de transcriptómica e respetivos metadados da base de dados
+
+### 2.1. Obtenção dos dados
+
+Com o objetivo de analisar os dados de transcriptómica referente ao carcinoma endometrial do corpo uterino, procedemos à extração da informação que se encontra presente no website cBioPortal, onde se encontram disponibilizados, de forma gratuita, uma grande diversidade de alterações genómicas de vários tipos de cancro, incluindo o cancro selecionado para estudo.
+Para esse efeito recorremos ao package TCGAbiolinks, uma vez que este possibilita a interação com a base de dados GDC DataPortal e apresenta várias funções que possibilitam realizar queries à base de dados filtrando os ficheiros que se pretende selecionar para proceder, posteriormente, ao seu download.
+
+```{r,results= 'markup'}
+query_UCEC = GDCquery(
+  project = "TCGA-UCEC",
+  data.category = "Transcriptome Profiling", 
+  data.type = "Gene Expression Quantification",
+  workflow.type = "STAR - Counts"
+)
+GDCdownload(query=query_UCEC)
+rna_seq_UCEC = GDCprepare(query = query_UCEC, save = TRUE, save.filename = "mRNA_TCGA-UCEC.rda")
+rna_seq_UCEC = get(load("mRNA_TCGA-UCEC.rda"))
+```
+
+A função **GDCquery()** é utilizada para realizar a query à base dados.
+Nesta função são definidos vários parâmetros que permitem filtrar o data set que posteriormente vai ser descarregado.
+O parâmetro "project" corresponde ao id atribuído ao tipo de cancro de modo a apenas considerar a informação disponível referente ao carcinoma endométrio do corpo uterino.
+A "data.category" é usado para especificar a categoria de dados que se pretende selecionar, neste caso, como pretendemos realizar a análise da transcriptómica selecionou-se a categoria "Transcriptome Profiling" para selecionar os dados relacionados com o perfil de expressão de genes.
+De entre os dados do perfil de expressão de genes restringiu-se apenas aos dados referentes à quantificação da expressão de genes definindo "data.type" como Gene expression quantification.
+Por fim, indicou-se o tipo de análise da expressão genética desejada, optando-se por recorrer ao START-Counts.
+Este workflow indica que o algoritmo utilizado para a contagem da expressão genética a partir do alinhamento das sequências foi realizada com a ferramenta STAR.
+
+A função **GDCdownload()** é utilizada para realizar o download dos dados consoante a query realizada e estabelecida na função anterior.
+Em seguida, recorreu-se à função **GDCprepare()** com o intuito de gerar um objeto "SummarizedExperiment" de modo a compilar a informação descarregada num único objeto de modo a facilitar a análise dos dados.
+É de notar que a função também permite gravar os dados em formato "rdata" de modo a facilitar o carregamento dos dados através da função **load()**.
+É importante referir que a utilização deste workflow permite o download simultâneo quer dos dados da expressão genética quer dos metadados associados às amostras e aos genes.
+
+### 2.2. Análise inicial dos dados
+
+Nesta fase procedeu-se à exploração incial dos dados de forma a perceber a dimensão dos dados correspondentes à expressão genética bem como dos metadados.
+
+```{r, echo=FALSE, results='markup', warning=FALSE, message=FALSE}
+# analise da estrutura dos dados descarregados
+# Comando cat() para exibir tudo  num bloco
+
+
+cat("Class of rna_seq_UCEC:", class(rna_seq_UCEC), "\n")
+cat("Dimensions of rna_seq_UCEC:", paste(dim(rna_seq_UCEC)[1], "x", dim(rna_seq_UCEC)[2]), "\n")
+cat("First 5 column names of rna_seq_UCEC:", paste(colnames(rna_seq_UCEC)[1:5], collapse=", "), "\n")
+cat("First 5 row names of rna_seq_UCEC:", paste(rownames(rna_seq_UCEC)[1:5], collapse=", "), "\n")
+
+
+cat("\n")
+
+# análise dos metadados
+linhas_metadados=SummarizedExperiment::rowData(rna_seq_UCEC)
+amostras_metadados = SummarizedExperiment::colData(rna_seq_UCEC)
+
+cat("Class of linhas_metadados:", class(linhas_metadados), "\n",
+    "Class of amostras_metadados:", class(amostras_metadados), "\n","Dimensions of linhas_metadados:", paste(dim(linhas_metadados), collapse=" x "), "\n",
+    "Dimensions of amostras_metadados:", paste(dim(amostras_metadados), collapse=" x "), "\n",
+    "First 5 column names of linhas_metadados:", paste(colnames(linhas_metadados)[1:5], collapse=", "), "\n",
+    "First 5 column names of amostras_metadados:", paste(colnames(amostras_metadados)[1:5], collapse=", "), "\n")
+```
+
+Através da análise feita acima é possível verificar que o nosso dataset é um objeto **SummarizedExperiment** que possui 60660 linhas e 589 colunas.
+Com a extração dos metadados associados às linhas podemos concluir que as linhas do objeto correspondem aos genes, sendo que, para cada gene, existem 10 metadados associados incluindo o gene_id que corresponde a um código único utilizado pela base de dados Ensembl para a identificação dos varios genes.
+Por outro lado, as colunas possuem 78 metadados que possibilitam a caracterização das 589 amostras utilizadas neste estudo permitindo analisar o impacto que as diferentes características possuem nos dados de expressão genética.
+É importante referir que os metadados associados às colunas passam a ter uma apresentação diferente, isto é, as linhas passam a ser identificadas com o id da amostra enquanto no objeto original as linhas são identicadas pelo id do gene.
+
+### 2.3. Preparação e pre-processamento dos dados
+
+Nesta etapa preparamos o dataset para ser, posteriormente, submetido a análise de expressão diferencial e de enriquecimento.
+Para esse efeito, optamos por separar os dados referentes à expressão genética e a informação relativa aos metadados do objeto inicial para depois realizar a filtragem dos dados.
+
+```{r extração da informação}
+#extração da informação da expressão de genes
+geneExp = SummarizedExperiment::assay(rna_seq_UCEC)
+```
+
+Com o package **SummarizedExperiment** armazenamos os dados de contagens de sequenciamento de RNA, bem como outros tipos de dados experimentais ómicos, juntamente com metadados relevantes.
+Esses dados de expressão genética extraídos são armazenados na variável geneExp.
+O comando **assay()** é usado para extrair a matriz de contagens (ou matriz de expressão) do objeto SummarizedExperiment.
+Esta matriz contém os dados numéricos de expressão para cada gene em cada amostra, que são essenciais para análises subsequentes, como normalização, análise de expressão diferencial, e outras análises ômicas.
+
+## 3.Metadados
+
+### 3.1. Pré-processamento e filtragem
+
+Com o intuito de fazer uma filtragem dos metadados, uma vez que é comum a existência de valores omissos, procedeu-se procedeu-se à diminuição do número de colunas associadas aos metadados, eliminando-se as colunas que possuem mais de 10% de valores omissos.
+Com esta abordagem vamos eliminar metadados que, por possuirem um número de NAs que definimos como limite, não constituem interesse para o nosso estudo.
+Assim, removemos as colunas dos metadados onde havia mais de 60 elementos como: "not/Not reported/Reported" e/ou "NA.
+
+```{r, echo=TRUE}
+
+# remoção de colunas com mais de 10% de valores omissos
+rm_not_reported = which(sapply(amostras_metadados,function(x) sum(x == "not reported", na.rm = TRUE)) > 60)
+rm_Not_Reported = which(sapply(amostras_metadados,function(x) sum(x == "Not Reported",na.rm = TRUE)) > 60)
+rm_nas = which(sapply(amostras_metadados, function(x) sum(is.na(x))) > 60)
+amostras_meta_reduzido = amostras_metadados[, -c(rm_not_reported, rm_Not_Reported, rm_nas)]
+dim(amostras_meta_reduzido)
+```
+
+Com esta filtragem obtivemos 50 colunas, em vez das 78 iniciais.É possível realizar uma filtragem ainda mais profunda dos metadados, porém estabeleceu-se nesta fase inicial uma percentagem fixa de valores omissos a eliminar.
+
+### 3.2. Análise Descritiva Exploratória
+
+Para o nosso estudo, de entre as 50 colunas de metadados filtradas, selecionamos 4 variáveis de caraterísticas distintas, nomeadamente as colunas "vital_status", "primary_diagnosis", "age_at_index", "figo_stage", procedendo ainda a uma transformação desta última coluna que será explicada adiante.
+
+```{r, echo=FALSE}
+# seleção apenas das colunas de interesse e transformação da coluna figo_stage
+amostras_meta_reduzido = amostras_meta_reduzido[,c("vital_status","primary_diagnosis","age_at_index","figo_stage")]
+amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_meta_reduzido$figo_stage)
+
+```
+
+### 3.3. Análise Exploratória {.tabset}
+
+#### Estado Vital
+
+A coluna "vital_status", incorpora uma variável nominal e dá-nos informações sobre a sobrevivência do paciente com cancro e apresenta 3 categorias possívies: "Alive", "Dead", "NA".
+Neste caso verificamos que, no momento de recolha dos dados, dos 589 pacientes, aproximadamente 81% estavam vivos e 16% tinham falecido, acerca dos restantes não havia informação disponível, sendo reportados como "NAs".
+
+```{r, echo=FALSE}
+# vital_status
+tabela_vital = prop.table(table(amostras_meta_reduzido$vital_status, useNA = "ifany")) *100
+barplot(tabela_vital, names.arg= c("Alive","Dead","NAs"), col= "lightblue", ylab="Percentagem",
+        main="Estado Vital")
+```
+
+#### Diagnóstico Primário
+
+A coluna "primary_diagnosis", corresponde a uma variável nominal, e descreve o diagnóstico histológico do paciente, de acordo com a Classificação Internacional de Doenças para Oncologia (International Classification of Diseases for Oncology, ICD-O) da Organização Mundial da Saúde.
+Apresenta 8 categorias possíveis "Adenocarcinoma, NOS","Carcinoma, undifferentiated, NOS","Clear cell adenocarcinoma, NOS","Endometrioid adenocarcinoma, NOS","Endometrioid adenocarcinoma, secretory variant","Papillary serous cystadenocarcinoma","Serous cystadenocarcinoma, NOS","Serous surface papillary carcinoma".
+A desginação "NOS", Not Otherwise Specified, apenas indica que com base nas informações disponíveis, um determinado tipo de cancro não pode ser encaixado noutra categoria mais específica.
+Verificamos que os dados vão de encontro à literatura, identificando o adenocarcinoma do endométrio como prevalente neste estudo, com cerca de 71.8% de pacientes diagnosticados com este tipo de cancro do corpo uterino.
+Logo de seguida temos 24.3% de pacientes com cistoadenocarcinomas serosos e 3.9% com outros tipos de cancro que agrupamos na categoria "Outros", incluindo os casos em que não se sabe a categoria("NA").
+
+```{r, echo=FALSE}
+# primary_diagnosis
+tabela_primary = prop.table(table(amostras_meta_reduzido$primary_diagnosis, useNA = "ifany")) * 100
+outros = sum(tabela_primary[c(1, 2, 3, 5, 6, 8, 9)])
+primary_comprimido = matrix(c(outros, tabela_primary[4], tabela_primary[7]), ncol = 3,
+    dimnames = list(NULL, c("Outros", "Endometrioid adenocarcinoma, NOS", "Serous cystadenocarcinoma, NOS")))
+labels_primary <- c("Outros", "Endometrioid adenocarcinoma", "Serous cystadenocarcinoma")
+pie(primary_comprimido, labels = paste(labels_primary, sprintf("%.1f%%", primary_comprimido)),
+    col = c('lightgreen', 'lightblue', 'lightpink'), main = "Distribuição de Diagnósticos Primários")
+
+```
+
+#### Estádio FIGO
+
+A coluna "figo_stage", incorpora uma variável ordinal que representa o estádio do cancro, nomeadamente no que diz respeito à sua extensão, especialmente se a doença se espalhou do local original para outras partes do corpo, conforme descrito pelos estádios da Federação Internacional de Ginecologia e Obstetrícia (FIGO) [4].
+Originalmente, esta classificação está dividia em 4 estádios principais, nomeadamente, estádio I onde o tumor está confinado ao corpo uterino, estádio II onde já existe envolvimento do cérvix/colo uterino, estádio III que representa um atingimento de estruturas adjacentes do mesmo orgão como por exemplo os gânglios linfáticos da zona pélvica e, por último, o estádio IV onde já existem metásteses noutros orgãos como por exemplo no intestino.
+Para além desta classificação em 4 estádios gerais, cada um destes estádios se encontra subdividido em dois ou mais estádios consoante a extensão a outras estrututras.
+Neste estudo, para conseguirmos visualizar os dados de forma mais eficiente, e dado o objetivo deste trabalho, decidimos proceder a uma transformação desta coluna, agrupando os diferentes sub-estádios nas suas 4 categorias principais.
+Desta forma, esta variável toma 4 níveis "STAGE I", "STAGE II", "STAGE III" e "STAGE IV", sendo que 60.3% das amostras são de tumores em "STAGE I", 9.2% em "STAGE II", 23.3% em "STAGE III", 5.3% em "STAGE IV" e exitem ainda 2% de amostras que não possuem classificação quanto ao estádio.
+Ou seja, mais de metade dos tumores em estudo são confinados ao corpo uterino, e uma parte considerável correspondem a tumores mais agressivos, com atingimento de estruturas adjacentes ao orgão reprodutor feminino (23.3%) ou com atingimento de outros orgãos (5.3%).
+
+```{r, echo=FALSE}
+# figo_stage
+tabela_figo = prop.table(table(amostras_meta_reduzido$figo_stage,  useNA = "ifany")) *100
+labels_figo = c("Stage I", "Stage II", "Stage III", "Stage IV", "NAs")
+pie(tabela_figo, labels = paste(labels_figo, sprintf("%.1f%%", tabela_figo)), col=c('lightblue','lightgreen',
+    'yellow','lightpink','orchid'), main= "Distribuição de Estágios de Cancro Ginecológico (FIGO)")
+
+```
+
+#### Idade dos Pacientes
+
+A coluna "age_at_index", corresponde a uma variável proporcional contínua, e representa a idade dos pacientes do estudo.
+Podemos verificar que a idade dos pacientes varia entre os 31 e os 90 anos, sendo que a maioria das idades está compreendida entre os 57 e os 71 anos e metade dos pacientes têm 64 ou menos anos.
+De acresentar que existem 15 pacientes acerca dos quais não se sabe a idade.
+
+```{r, echo=FALSE}
+# age_at_index
+idade_pacientes = amostras_meta_reduzido$age_at_index
+summary(idade_pacientes)
+#par(mfrow = c(2, 1))
+boxplot(idade_pacientes,horizontal=F, col = "purple", main='Histograma da idade dos pacientes')
+hist(idade_pacientes, xlab = 'Idade dos Pacientes', ylab = 'Frequência', main = 'Histograma da Idade dos Pacientes',
+     col='lightblue')
+
+```
+
+```{r, echo=FALSE}
+cat("\n")
+```
+
+Dado que verficamos a presença de alguns NAs, na fase de realização dos testes de hipóteses, decidimos eliminar as linhas, ou seja, os pacientes, sobre os quais não tínhamos informações relativas aos metadados selecionados.
+Esta trasnformação culminou num total de 574 pacientes em estudo em vez dos 589 iniciais.
+
+```{r, echo=FALSE}
+metados_sem_nas = na.omit(as.data.frame(amostras_meta_reduzido))
+dim(metados_sem_nas) # passamos de 589 para 574
+```
+
+### 3.4. Testes de hipótese
+
+**Nota:** para todos os testes estatísticos abaixo realizados, considere-se um valor de prova igual a 0.05.
+
+Ainda dentro da análise exploratória dos dados, através do boxplot "Idade do Paciente por Estádio FIGO" conseguimos, visualmente, constatar que a mediana das idades em pacientes com tumor no estádio IV é maior que as restantes, o que pode indicar uma relação entre a idade avançada e o estádio do tumor no que diz respeito à sua gravidade.
+Entre os restantes estádios não se verifica, visualmente, uma diferença tão notória na mediana.
+
+```{r, echo=FALSE}
+#idade dos pacientes em função do estádio FIGO
+boxplot(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage, horizontal = T,
+        xlab="Idade do paciente", ylab="Estádio FIGO", main= "Idade do Paciente por Estádio FIGO",
+        col=c("lightcoral","indianred","tomato",'red')) #verificação visual dos vários grupos
+```
+
+Passando aos testes estatísticos, para as hipóteses definidas como:
+
+::: {style="text-align: center;"}
+H0: Não existem diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
+H1: Existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
+:::
+
+Através do **shapiro.test()** verificamos que os dados da variável "age_at_index" não são normais (p.value\<0.05).
+No entanto, através da análise do Q-Q Plot, com sobreposição da linha qqline, verificamos que os pontos estão, na sua maioria, sobrepostos à linha diagonal e apenas as extremidades se afastam abaixo e acima da diagonal.
+Para além disso, estamos perante um grande volume de dados (n=574), ou seja, de acordo com o teorema do limite central, podemos aceitar a normalidade dos dados apesar de o valor de p-value do teste de shapiro nos levar a rejeitar a hipótese nula.
+Garantindo a normalidade e a homogenidade das variâncias, procedemos à análise **anova one way** para verificarmos se existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios e obtivemos um valor de prova de 0.722, o que nos leva a não rejeitar a hipótese nula, ou seja, não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
+
+```{r, echo=FALSE}
+shapiro.test(metados_sem_nas$age_at_index) # teste à normalidade dos dados
+qqnorm(metados_sem_nas$age_at_index) # visualização da normalidade através do gráfico qqplot
+qqline(metados_sem_nas$age_at_index)
+```
+
+```{r, echo=FALSE}
+# Teste de Bartlett para verificar homogeneidade das variâncias
+#H0: as variâncias são homogénas
+#H1: as variâncias não são homogénas
+bartlett.test(metados_sem_nas$age_at_index ~ metados_sem_nas$figo_stage)
+```
+
+```{r, echo=FALSE}
+#H0: Não há diferença estatisticamente significativa na média das idades dos pacientes entre os diferentes estádios FIGO
+#H1: Há diferença estatisticamente significativa na média das idades dos pacientes entre os diferentes estádios FIGO
+aov_FIGO = aov(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage)
+summary(aov_FIGO)
+boxplot(aov_FIGO$residuals, horizontal = T, main= "Análise dos resíduos- estádio FIGO" ) # verificação da homogeneidade das variâncias
+```
+
+Ainda assim, procedemos à realização do teste não paramétrico **kruskal.test()** para vermos se os resultados seriam os mesmos e, mais uma vez, obtivemos um valor de prova de 0.6632 que não nos permite rejeitar a hipótese de que não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
+
+```{r}
+kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$figo_stage) # teste não parametrico
+```
+
+No que diz respeito ao estado de sobrevivência dos pacientes, vital_status, visualmente é transmitida a ideia de que os pacientes que já faleceram tinham uma idade mais avançada.
+Através do teste anova one way,para as hipóteses definidas como:
+
+::: {style="text-align: center;"}
+H0: Não existem diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida.
+H1: Existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida.
+:::
+
+verificamos que a hipótese nula é rejeitada (p value= 6.13e-05), ou seja, existem diferenças estatisticamente significativas entre a idade dos pacientes nos diferentes grupos "Alive" e "Dead".
+
+```{r, echo=FALSE}
+#idade dos pacientes em função do estado vital
+# Teste de Bartlett para verificar homogeneidade das variâncias
+#H0: as variâncias são homogénas
+#H1: as variâncias não são homogénas
+bartlett.test(metados_sem_nas$age_at_index ~ metados_sem_nas$vital_status)
+```
+
+```{r, echo=FALSE}
+boxplot(metados_sem_nas$age_at_index~metados_sem_nas$vital_status, horizontal = T,
+        xlab="Idade do paciente", ylab="Estado Vital", main= "Idade do Paciente por Estado Vital",
+        col=c("lightgreen","gray"))
+```
+
+```{r, echo=FALSE}
+aov_estado_vital = aov(metados_sem_nas$age_at_index~metados_sem_nas$vital_status)
+summary(aov_estado_vital)
+boxplot(aov_estado_vital$residuals, horizontal = T , main= "Análise dos resíduos- estado vital") # verificação da homogeneidade das variâncias
+```
+
+Realizamos também para este caso o teste não paramétrico kruskal.test() e obtivemos um valor de prova de 0.0001071 que nos permite rejeitar a hipótese de que não há diferenças significativas na média das idades dos pacientes entre os diferentes estados de vida ("Alive" e "Dead").
+
+```{r, echo=FALSE}
+kruskal.test(metados_sem_nas$age_at_index~metados_sem_nas$vital_status) # teste não parametrico
+```
+
+## 4.Análise de expressão diferencial e enriquecimento
+
+### 4.1.Análise de expressão diferencial
+
+#### 4.1.1 DESEQ2
+
+Com o intuito de proceder à análise dos genes que se encontram diferencialmente expressos no tumor "Endometrioid adenocarcinoma, NOS" em função do estado vital do paciente procedeu-se ao pré-processamento dos dados de modo a facilitar e otimizar a análise diferencial reduzindo o tempo e os recursos computacionais necessários.
+Numa primeira fase realizou-se a filtragem das amostras que possuem diagnóstico primário "Endometrioid adenocarcinoma, NOS", já que apenas estas amostras representam relevância para o nosso estudo.
+Em seguida, avaliou-se a eventual presença de valores omissos ao nível da coluna do estado vital e, uma vez que não existem valores omissos, transformou-se o metadado "vital_status" em fator, visto que a análise de expressão diferencial realizada pelo package DESeq2 recomenda a utilização de fatores ao invés de caracteres.
+
+Embora se tenha realizado uma filtragem ao nível das amostras, uma vez que o dataset possui cerca de 61 mil genes analisados, é importante realizar uma filtragem de modo a remover genes que apresentam expressão ausente, isto é, genes que não possuem nenhuma amostra com expressão.
+Além disso, é também interessante remover genes que possuem um baixo nível de expressão, uma vez que estes genes não permitem retirar informações relevantes acerca da expressão diferencial.
+Para isso eliminou-se do dataset todos aqueles genes que não possuíam pelo menos 20 counts em pelo menos 4 amostras, sendo que estes parâmetros são considerados standard, segundo o workflow apresentado na documentação do [DESeq2](https://shorturl.at/nyLT0).
+Após a etapa do pré-processamento, o dataset final apresenta cerca de 28 mil genes e 423 amostras e, com o dataset filtrado, realizou-se a criação do objeto DESeqDataSet, em que se utilizou o fator "vital_status" como uma variável explicativa do modelo.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+dados_sem_nas = rna_seq_UCEC[,!is.na(rna_seq_UCEC$primary_diagnosis)]
+amostras_EA = dados_sem_nas$primary_diagnosis == "Endometrioid adenocarcinoma, NOS" 
+dados_EA = dados_sem_nas[,amostras_EA]
+dim(dados_EA)
+
+gene_exp_filtrado = dados_EA[,!is.na(dados_EA$vital_status)] 
+gene_exp_filtrado$vital_status = factor(gene_exp_filtrado$vital_status)
+ddsSE = DESeqDataSet(gene_exp_filtrado, design = ~ vital_status)
+dim(ddsSE)
+
+ddsSE = ddsSE[rowSums(counts(ddsSE)) > 0, ]
+dim(ddsSE)
+
+genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
+ddsSE = ddsSE[genes_manter, ]
+dim(ddsSE)
+
+ddsSE_norm = DESeq(ddsSE)
+resultados = results(ddsSE_norm, alpha = 0.05)
+
+summary(resultados) # sumario dos resultados do teste de expressão diferencial
+sum(resultados$padj < 0.05, na.rm=TRUE) # número total de genes diferencialmente expressos
+```
+
+Em seguida procedeu-se à utilização da função **DESeq()** para realizar os testes de expressão diferencial.
+Esta função realiza 4 etapas essências para garantir a robustez dos testes realizados.
+A primeira etapa corresponde à estimativa de fatores de tamanho para cada amostra, sendo estes utilizados para normalizar as contagens de expressão genética, tendo em consideração as diferenças nas profundidades de sequenciamento entre as amostras, sendo essencial para remover enviesamentos técnicos.
+Posteriormente, a função realiza a estimativa das dispersões correspondentes às variações biológica e técnica dos dados de expressão genética.
+Após a estimativa dos valores de dispersão, o modelo estatístico é ajustado aos dados, com o intuito de se testar a expressão diferencial para o modelo criado no objeto DESeqDataSet, sendo que o teste padrão utilizado pela ferramenta é o **test Wald**, no entanto pode-se utilizar o teste de log-verossimilhança (LRT).
+Por fim, a função deteta e substitui outliers, isto é, genes com contagens muito altas ou muito baixas em comparação com a previsão do modelo, de modo a melhorar a robustez dos resultados
+
+Dos resultados obtidos dos testes de expressão diferencial, optamos por considerar um valor de erro de 5%, resultando que apenas os genes que possuem um valor de "padjust" inferior a 5% são considerados como diferencialmente expressos.
+Segundo a sumarização dos resultados, nas condições estabelecidas, foram identificados no total 3431 genes, sendo que desses 2308 se encontram sobreexpressos e os restantes subexpressos.
+Os resultados contêm 6 colunas.
+A coluna baseMean representa a média normalizada das contagens para todas as amostras.
+A coluna log2FoldChange que avalia a diferença da expressão em logaritmo de base 2 entre os dois grupos comparados neste caso "Alive" e "Dead".
+Por fim o valor de pvalue que representa a probabilidade de o valor de log fold changes calculado ser resultado do acaso.
+
+```{r, echo=FALSE}
+
+DESeq2::plotMA(resultados, main="Expressão diferencial em função do estado vital") # visualização gráfica dos resultados, pontos azuis genes DE
+
+```
+
+A visualização dos resultados é possível através do plotMA.
+No gráfico, os pontos representados a azul correspondem aos genes que são diferencialmente expressos sendo que, os pontos que se encontram em valores positivos de "log fold change" correspondem aos genes que são sobrexpressos para a condição "Dead" enquanto que os pontos localizados para valores negativos identificam os genes que são subexpressos na condição "Dead" e por isso são considerados sobrexpressos na condição "Alive".
+Pela densidade dos pontos azuis é possível concluir que grande parte dos genes diferencialmente expressos estão sobreexpressos na condição alive.
+Por outro lado, os pontos a cinza representam os genes que não são diferencialmente expressos, e por este gráfico conclui-se que grande parte dos genes em estudo não sofrem variações estatisticamente significativas para serem considerados diferenciais.
+É ainda possível verificar que uma grande dispersão dos pontos azuis, sobretudo para os genes de baixa expressão sugerindo que existe uma variabilidade considerável na expressão diferencial.
+Embora o gráfico forneça uma visão geral da expressão diferencial para a condição em estudo, é necessário avaliar os genes de forma mais detalhada de modo a determinar a sua função biológica e a relevância para o estudo em questão.
+
+```{r, echo=FALSE}
+
+plotCounts(ddsSE_norm, gene=which.min(resultados$padj), intgroup="vital_status", pch = 19)
+
+resOrdered = resultados[order(resultados$padj),]
+resOrdered[1,]
+```
+
+Em seguida, optou-se por analisar o comportamento de um gene individual, tendo se escolhido o gene que apresenta o menor valor de padjust indicando que será o gene que mais se encontra diferencialmente expresso.
+Pela análise do gráfico, verifica-se que o grupo "alive" possui menor variação na contagem normalizada do que o grupo "dead", o que leva a que a média do grupo "Dead" seja superior à média do grupo "Alive".
+Esta informação é corroborada pelas estatísticas produzidas para este gene em que o valor de log2FoldChange, por ser positivo indica que a classe Dead se encontra sobreexpressa, no entanto no gráfico essa conclusão fica dificultada e, para além disso, ambas as classes parecem apresentar o mesmo comportamento.
+Tal como observado no gráfico plotMA, este gene apresenta níveis de expressão baixos o que faz com que a variabilidade da expressão seja fortemente afetada por pequenas variações na contagem.
+Em adição, este "falso positivo", pode também ser resultado do facto de que cerca de 80% das amostras analisadas correspondem ao estado vivo enquanto que apenas 16% ao estado morto, levando a que a média das contagens para o estado morto seja, também, mais influenciada pela variação das contagens.
+Para além disso, uma breve pesquisa em artigos de estudo de cancro, afirmam que, atualmente, não existem evidências científicas que comprovem que o gene ELAVL4 (ENSG00000162374.18), possua impacto direto na progressão do estádio do cancro, na formação de metasteses ou com a gravidade do tumor, sendo que, para o tumor endometrial, ainda não existem estudos que incidam sobre este gene, reforçando portanto que o facto deste gene ser considerado diferencialmente expresso pode ser o resultado de limitações técnicas e não pelo impacto biológico que este gene apresenta nas amostras analisadas sendo necessários estudos posteriores.
+
+#### 4.1.2 edgeR
+
+Como a utilização do package DESEQ2 não permitiu chegar à conclusão clara de que genes se encontram diferencialmente expressos entre os dois grupos em estudos, recorreu-se a um segundo package, [edgeR](https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf) para proceder à análise de expressão diferencial.
+A função utilizada para proceder à análise da expressão diferencial no edgeR não realiza a normalização dos dados quer a nível das contagens de reads quer da dimensão da libraria, logo as primeiras etapas do workflow envolvem a normalização dos dados de modo a que possam ser comparáveis minimizando o enviesamento técnico e experimental.
+A normalização das contagens de reads fez-se através do método cpm (counts per million) sendo que os genes que possuem baixo nível de expressão foram removidos tendo sido preservados apenas aqueles genes que possuem um valor cpm superior a 0.5 em pelo menos 2 amostras (estes parâmetros foram escolhidos com base na informação disponibilizada na documentação do package).
+A normalização do tamanho das librarias é importante para garantir que as diferenças observadas na expressão genética são, na verdade, resultado de diferenças biológicas e não a consequência de artefactos técnicos como, por exemplo, a profundidade do sequenciamento.
+
+```{r}
+# normalização dos dados das contagens
+dados_EA_CPM = cpm(dados_EA)
+
+#filtragem dos genes que possuem valores de cpm superiores a 0.5 em pelo menos 2 amostras
+min_exp = dados_EA_CPM > 0.5
+keep_rows =  rowSums(min_exp) >= 2
+dados_EA_CPM_filt = dados_EA_CPM[keep_rows,]
+
+#criação do objeto dbe
+dgeObj = DGEList(dados_EA_CPM_filt)
+
+# normalização do tamanho da libraria de cada amostra
+dgeObj = calcNormFactors(dgeObj)
+
+```
+
+Em seguida, após a normalização e filtragem de genes, procedeu-se a criação do design da variável em estudo e procedeu-se à estimativa dos fatores de dispersão, tendo sido calculados os fatores de dispersão comum, com tendência e tag com a função estimateDisp.
+Esta estimativa é um medida da variabilidade dos dados e é um passo crucial para modelar a relação entre a média e a variância dos dados para cada gene.
+Nesta etapa é comum a realização da estimativa dos três tipos de dispersão.
+A dispersão comum (common dispersion) é uma medida da variabilidade geral dos dados entre as amostras, isto é a variação que não é associada a características específicas de genes individuais, mas sim à variabilidade global dos dados de expressão genética no conjunto total de genes analisados sendo importante para modelar a relação entre a média e a variância dos dados, essencial para identificar com confiança genes diferencialmente expressos.
+A dispersão com tendência (trended dispersion) é uma medida adicional da variabilidade dos dados que têm em conta padrões ou tendências específicas utilizada para modelar padrões adicionais de variabilidade.
+Por fim, a dispersão por tag (tagwise dispersion) é uma medida da variabilidade específica para cada gene permitindo capturar a variação gene a gene que é útil para análises de expressão diferencial.
+
+```{r}
+# análise de expressão diferencial
+vital_status = as.factor(amostras_filtradas$vital_status)
+design = model.matrix(~vital_status)
+
+# Estimativa da dispersão comum, dispersão com tendência e dispersão por tag em uma única execução
+dgeObj = estimateDisp(dgeObj, design = design)
+
+# ajuste do modelo e teste de razão de verosimilhança 
+fit = glmFit(dgeObj, design)
+lrt = glmLRT(fit, coef=2)
+topTags(lrt)
+
+
+# sumario dos resultados
+summary(decideTests(lrt))
+
+
+# visualização gráfica dos genes diferencialmente expressos
+plotMD(lrt)
+abline(h=c(-1, 1), col="blue")
+
+```
+
+Em seguida realizou-se o ajuste do modelo linear generalizado (GLM) aos dados de expressão genética contidos no objeto dgeObj tendo em conta o design aplicado, que, neste cenário de estudo, pretende avaliar as diferenças a nível da expressão genética de acordo com o vital_status de cada amostra.
+Em seguida, com os resultados do ajuste do modelo linear generalizado, realizou-se o teste de razão de verosimilhança (LRT) para testar a significância das diferenças entre os níveis em estudo.
+Com base nesta análise, obtemos 791 genes subexpressos e 2593 sobreexpressos.
+Comparando com os resultados obtidos através do DESeq2 verifica-se que o edgeR identificou menos 47 genes diferencialmente expressos.
+A análise dos gráficos dos genes diferencialmente expressos de ambos os packages permite concluir que embora os packages tenham produzidos resultados ligeiramente diferentes a análise é bastante semelhante.
+Para esta abordagem o gene que apresentou diferença de expressão mais expressiva foi o gene ENSG00000066405.13 com um valor de PValue de 7.142125e-122.
+Este gene expressa a proteína ["claudin 18"](https://www.uniprot.org/uniprotkb/P56856/entry) que, segundo um estudo realizado 2020, não se encontra expresso em tecidos saudáveis com a exceção do tecido da mucosa gástrica, sendo comummente expresso em vários tipos diferentes de cancro [5].
+Os nossos resultados sugerem que este gene pode ser um indicador da gravidade do cancro, uma vez que existe diferença significativa de expressão entre os dois níveis das amostras, no entanto, não há, até ao momento, nenhum estudo que correlaciona a expressão desta proteína com a gravidade do cancro endometrial.
+
+Segundo o estudo realizado por Bianco B et al. em 2020 [6] os genes mais comummente mutados neste tipo de cancro são PTEN(\>77%), PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%), RPL22 (12%), TP53 (11%), FGFR2 (11%) e ARID5B (11%).
+Com o intuito de analisar se estes genes possuem expressão diferencial entre os dois grupos primeiro realizou-se uma filtragem dos resultados de modo apenas considerar como diferencialmente expressos os genes com maior impacto biológico.
+Esta filtragem levou a que apenas 125 genes fossem considerados subexpressos e 1394 considerados sobreexpressos, tendo assim garantia que estes genes identificados são aqueles que apresentam maior importância biológica.
+
+```{r}
+filtered_results = glmTreat(fit, lfc=log2(1.5))
+
+summary(decideTests(filtered_results))
+
+plotMD(filtered_results)
+abline(h=c(-1, 1), col="blue")
+
+```
+
+Em seguida, recolheu-se os ids ensembl dos genes identificados pelo estudo e verificou-se se os genes apresentam expressão diferencial.
+A análise realizada com o package edgeR revelou que todos os genes referidos no estudo não apresentam expressão diferencial para os níveis do "vital_status", no entanto o package DESeq2 identifica dois dos genes como sendo diferencialmente expressos, sendo estes o gene ENSG00000121879.6 e o gene ENSG00000133703.13
+
+```{r}
+genes_mutados = c("ENSG00000171862.11", "ENSG00000121879.6", "ENSG00000145675.15", "ENSG00000168036.18",
+                  "ENSG00000117713.20", "ENSG00000133703.13", "ENSG00000102974.16", "ENSG00000116251.11",
+                  "ENSG00000141510.18", "ENSG00000066468.23", "ENSG00000150347.16")
+
+
+n_gene_edgeR=c()
+for (gene in genes_mutados){
+  n_gene_edgeR=c(n_gene_edgeR, which(rownames(filtered_results)==gene))
+}
+filtered_results[n_gene_edgeR,]$table
+
+
+n_gene_DESeq2=c()
+for (gene in genes_mutados){
+  n_gene_DESeq2=c(n_gene_DESeq2, which(rownames(resultados)==gene))
+}
+resultados[n_gene_DESeq2,]
+
+```
+
+Uma análise mais detalhadas destes genes, revela que na realidade o gene ENSG00000121879.6, apresenta um comportamento semelhante em ambos os grupos, no entanto, o nível "Dead" apresenta maior variação dos resultados e, além disso, possui um menor número de amostras, e, por estas razões, o package identifica o gene como sendo diferencialmente expresso, uma vez que a variação leva a um aumento da média do grupo "Dead. Para o gene ENSG00000133703.13 os resultados parecem mais promissores, visto que, o grupo "Dead" apresenta resultados com menor variação, no entanto, não existe separação clara entre os dois grupos o que pode sugerir que se o dataset possuísse mais amostras para o grupo "Dead" o gene, muito possivelmente, não seria identificado como diferencialmente expresso. Por os motivos apresentados acima, não existe confiança de que, na realidade, este genes são diferencialmente expressos.
+
+```{r}
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000121879.6"), intgroup="vital_status", pch = 19)
+plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000133703.13"), intgroup="vital_status", pch = 19)
+```
+
+### 4.2.Análise de enriquecimento
+
+Após a análise de expressão diferencial, recorreu-se a análise de enriquecimento, uma vez que é uma técnica essencial na análise de dados de expressão gênica, pois permite identificar vias biológicas que estão significativamente enriquecidas com genes diferencialmente expressos em um conjunto de dados.
+Por outras palavras, a análise de enriquecimento de pathways transforma dados de expressão genética em informações biologicamente relevantes, sendo iportante na compreensão dos mecanismos molecualres em diversas condições biológicas e doenças.
+
+Antes de se proceder à análise de enriquecimento foi necessário tratar os resultados da expressão diferencial de modo a que o nome dos genes, corresponde-se aos nomes dos genes utilizados no ficheiro gmt.
+Para isso, no dataframe dos resultados foi adicionada uma última coluna com o nome do gene correspondente.
+Por motivos de praticidade os resultados foram guardados num ficheiro csv de modo a facilitar o seu carregamento.
+Escolheu-se como conjunto de genes de background ["Hallmark"](https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp#C2), uma vez que este conjunto de genes sumariza e representa estados biológicos ou processos específicos bem definidos exibindo uma expressão coerente.
+Os genes da análise de expressão diferencial foram ordenados de forma decrescente de acordo com o valor de "folg2FoldChange" e em seguida os genes que se encontram duplicados foram eliminados, uma vez que a redundância de genes produz resultados inesperados na análise de enriquecimento.
+Os resultados da análise de enriquecimento ordenados de forma crescente em função do valor de padj foram guardados num ficheiro csv.
+
+```{r}
+
+# extração do nome de cada gene
+#nome_gene=c()
+#for (gene in rownames(resultados)) {
+#  nome_gene =c(nome_gene,linhas_metadados[gene,"gene_name"])}
+
+
+# adição do nome de cada gene ao dataframe dos resultados da expressão diferencial
+#resultados["gene_name"] = nome_gene
+# salvar o data frame resultados com o nome de cada gene
+#write.csv(resultados, file = "dge_deseq2.csv", row.names = T)
+
+# carregamento do grupo de genes para a análise de enriquecimento
+#path = gmtPathways("h.all.v2023.2.Hs.symbols.gmt")
+# Ordena os resultados pela alteração na expressão em ordem decrescente
+#results_ord = resultados[order(-resultados[,"log2FoldChange"]), ]
+# Prepara os rankings para a FGSEA
+#ranks = results_ord$log2FoldChange
+# associa às linhas o nome do gene
+#names(ranks) = results_ord$gene_name
+# Identificar genes duplicados
+#duplicated_genes = names(ranks)[duplicated(names(ranks))]
+# Remover genes duplicados
+#ranks = ranks[!names(ranks) %in% duplicated_genes]
+
+
+# Executar a análise FGSEA com os genes não duplicados
+#fgseaRes = fgsea(pathways = path, stats = ranks, minSize = 15, maxSize = 500, nproc=1)
+
+# ordenação dos resultados por ordem crescente de padj
+#res_ordenado = fgseaRes[order(padj),]
+#res_ordenado[res_ordenado[, padj<0.01]]
+
+#salvar o resultado da análise de enriquecimento ordenado
+#write.csv(as.data.frame(res_ordenado[,1:6]), file = "enrichemnt_analysiss.csv", row.names = T)
+```
+
+Analisado-se os resultados verificou-se que 18 das 50 vias analisadas sofreram alterações, sendo que a via que maior alteração sofreu, isto é, aquela que apresenta menor valor de padj, foi a via "HALLMARK_ALLOGRAFT_REJECTION".
+Segundo a informação disponível no site da [GSEA](https://www.gsea-msigdb.org/gsea/index.jsp) este conjunto de genes está associada ao aumento da resposta imunitária que provoca a rejeição de orgãos tansplantados.
+No nosso cenário de estudo, podemos concluir que as amostras do estado Dead, apresentam um empobrecimento desta via (valor NES negativo) o que significa que os indivíduos desta amostra sofreram uma diminuição da resposta imunitária possibilitando o desenvolvimento e agravamento do cancro.
+Destacou-se também a via "HALLMARK_E2F_TARGETS", esta via está relacionada ao controlo do ciclo celular e à regulação genética por fatores de transcrição da família E2F, envolvendo genes que são ativados durante a fase G1 do ciclo celular que são essenciâncias para a progressão do ciclo celular.
+No nosso caso de estudo esta via sofreu enriquecimento nas amostras do grupo Dead (valor NES positivo) o que indica um aumento da proliferação das células do cancro que juntamente com a diminuição da resposta imunitária possibilta o desenvolvimento descontrolado do tumor e o desenolvimento para um estádio da doença mais agressivo da doença
+
+```{r}
+# leitura dos resultados da análise de enriquecimento
+enrichment = enrichemnt_analysiss <- read.csv("C:/Users/ricar/Desktop/Trabalhos R/enrichemnt_analysiss.csv", row.names=1)
+
+#  número de vias enriquecidas
+sum(enrichment$padj<0.01)
+
+# topo da tabela ordenada
+head(enrichment)
+
+```
+
+Conclui-se então que, embora a análise de expressão diferencial não produziu resultados que permitisse identificar genes que pudessem explicar o estado vital dos pacientes, a análise de enriquecimento permitiu identificar as vias metabólicas que se encontram alteradas e que ajudam a explicar o estado vital e permite compreender um pouco melhor o mecanismo que leva ao agravamento da doença
+
+# 2ª Parte
+
+## Análise não supervisionada
+
+### 1.Redução da dimensionalidade {.tabset}
+
+As técnicas Principal Component Analysis (PCA) e t-Distributed Stochastic Neighbor Embedding (t-SNE) são duas técnicas de redução de dimensionalidade amplamente utilizadas na análise de dados.
+Ambas têm como objetivo reduzir a complexidade dos dados, eliminando a redundância (muito caraterísitca em datasets desta natureza) permitindo a visualização e a compreensão de padrões ou estruturas subjacentes.Muitas vezes, é útil usar ambos em conjunto: PCA para uma visão geral dos dados e t-SNE para uma visualização mais detalhada e interpretação de padrões locais.
+
+#### 1.1. PCA (Principal Component Analysis)
+
+```{r, echo=FALSE}
+pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
+summary(pcares1)$importance[3, ]
+
+min(which(summary(pcares1)$importance[3,]>0.95))
+pcares1$rotation[, 1:20]
+```
+
+No nosso caso, podemos verificar que das 423 variáveis, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
+Através do plot dos componentes principais, podemos verificar que os primeiros dois contribuem de forma mais significativa para a explicação da variabilidade dos dados.
+No entanto, através do biplot desses dois componentes, não conseguimos verificar nenhuma divisão clara dos dados.
+
+```{r, echo=FALSE}
+plot(pcares1)
+biplot(pcares1)
+```
+
+Quer a nível do metadado "figo_stage", quer a nível do "vital_status", não conseguimos identificar uma sepração clara dos grupos com base nos componentes principais.
+
+```{r, echo=FALSE}
+amostras_filtradas$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_filtradas$figo_stage) #recuperar transformação inicial
+amostras_filtradas$figo_stage <- factor(amostras_filtradas$figo_stage)
+cores_estagio <- rainbow(length(levels(amostras_filtradas$figo_stage)))
+plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
+```
+
+```{r, echo=FALSE}
+amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
+plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
+```
+
+#### 1.2. tSNE (t-Distributed Stochastic Neighbor Embedding)
+
+```{r, echo=FALSE}
+dados_EA_CPM_nd = dados_EA_CPM[!duplicated(dados_EA_CPM),]
+dim(dados_EA_CPM_nd)
+res_tnse = Rtsne(dados_EA_CPM_nd)
+plot(res_tnse$Y, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
+```
+
+```{r}
+amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
+plot(res_tnse$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
+```
+
+Aplicando a técnica tSNE chegamos à mesma conclusão que haviamos chegado com a técnica de PCA, não havendo uma separação clara entre grupos no que diz respeito ao "figo_stage" e ao "vital_status".
+
+### 2.Clustering
+
+O clustering é uma técnica de aprendizagem não supervisionada que identifica padrões e a estrutura nos dados, agrupando-os em conjuntos homogéneos.
+Utiliza medidas de distância ou similaridade para agrupar pontos de dados próximos, procurando maximizar a coesão intra-cluster e a separação inter-cluster.
+Esses grupos podem revelar insights sobre a estrutura subjacente dos dados.
+
+No nosso relatório, abordamos dois algoritmos de clustering: K-means, que é um algoritmo de clustering que divide um conjunto de dados em K clusters, minimizando a soma dos quadrados das distâncias entre os pontos e os centroides; clustering hierárquico, que constrói uma árvore de clusters, onde cada nó representa um cluster.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+ddsSE_norm <- DESeq(ddsSE) 
+data_rna_UCEC_matrix <- as.matrix(assay(ddsSE_norm))
+data_rna_UCEC_transposed <- t(data_rna_UCEC_matrix)
+```
+
+Com o objetivo de preparar os dados para o clustering, começa-se com a normalização dos dados de expressão gênica **(ddsSE)** usando o método DESeq.
+Em seguida, os dados normalizados são convertidos numa matriz **(data_rna_UCEC_matrix)**.
+Posteriormente, a matriz é transposta para que as linhas se tornem colunas e vice-versa **(data_rna_UCEC_transposed)**.
+Essa transposição pode ser útil em análises posteriores, como por exemplo, quando se deseja ter genes como linhas e amostras como colunas.
+
+#### 2.1.Hierárquico {.tabset}
+
+Este tipo de clustering baseia-se na probabilidade de pertencer a um grupo e segue uma abordagem aglomerativa (recorrendo à estratégia bottom-up), começando pelas folhas até à raiz da árvore.
+Os clusters são representados pelos nós.
+A análise do cluster hierárquico usa a distância Euclidiana para calcular a proximidade entre os pontos num espaço multidimensional, considerando todas as dimensões.
+Após calcular a matriz Euclidiana, diferentes métodos podem ser usados para calcular a distância entre os clusters, como por exemplo: single linkage, complete linkage ou average linkage.
+As 3 formas estão codificadas de seguida.
+Além disso, podemos aplicar essa técnica agrupando genes ou pacientes.
+
+```{r, results='hide', warning = FALSE, message=FALSE}
+#calculo da matriz euclidiana
+tt_mdr = rowttests(t(data_rna_UCEC_matrix)) #teste estatístico para cada gene na matriz de dados de RNA. Determina se há diferenças significativas na expressão gênica entre diferentes condições ou grupos experimentais
+rank_mdr = order(tt_mdr$p.value) #ranking crescente dos genes com base nos seus pvalues
+genes_mdr = rank_mdr[1:30] #seleciona os índices dos 30 menores valores-p
+data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,] #cria uma nova matriz que contém apenas as linhas correspondentes aos 30 genes mais diferencialmente expressos
+
+eucD = dist(data_rna_UCEC_rank)
+```
+
+Com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de testes estatísticos t para cada gene, na matriz de dados, determinando diferenças na expressão genética entre grupos experimentais.
+De seguida, classificam-se os genes com base nos valores p.
+Posteriormente, selecionaram-se os 30 genes com menores valores p, e criou-se uma nova matriz com as linhas correspondentes a esses genes.
+Por fim, calcula-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
+
+##### Por genes
+
+Identificou-se os grupos de genes que têm padrões de expressão semelhantes entre os pacientes/amostras.
+Assim, este agrupamento dá informações sobre a similaridade entre os genes, permitindo identificar genes que são coexpressos e podem até estar envolvidos em vias metabólicas ou outro processo semelhante.
+
+```{r, results='hide', warning = FALSE, message=FALSE}
+#(usamos a matriz original - data_rna_LGG_matrix(linhas: genes; colunas: amostras))
+tt_mdr_g = rowttests(data_rna_UCEC_matrix)
+rank_de_mdr_g = order(tt_mdr_g$p.value)
+genes_de_mdr_g = rank_de_mdr_g[1:30]
+data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,]
+eucD = dist(data_rna_UCEC_rank)
+
+#complete
+cl.hier <- hclust(eucD)
+plot(cl.hier,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:complete, distância Euclidiana")
+
+#single
+cl.hier2 <- hclust(eucD, method="single")
+plot(cl.hier2,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:single, distância Euclidiana")
+
+#average
+cl.hier3 <- hclust(eucD, method="average")
+plot(cl.hier3,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 genes com menor p-value \nmétodo:average, distância Euclidiana")
+```
+
+Analisando os três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 genes mais diferencialmente expressos, proporcionando confiança nos resultados obtidos, uma vez que, as 3 abordagens distintas dão, em suma, a mesma divisão.
+Além disso, poderíamos dividir estes 30 genes em 3 subgrupos e a partir daí explorar os genes associados.
+
+##### Por pacientes
+
+Identificou-se os grupos de pacientes que se assemlham com base no perfil de expressão genético.
+Este agrupamento dá informações sobre a similaridade entre os pacientes ajudando a descobrir grupos de subgrupos de pacientes com perfis de expressão semelhantes.
+
+```{r, results='hide', warning = FALSE, message=FALSE}
+#(usamos a matriz transposta - data_rna_LGG_transposed(vice-versa), útil quando o foco é amostras)
+tt_mdr = rowttests(t(data_rna_UCEC_matrix))
+rank_de_mdr = order(tt_mdr$p.value)
+genes_de_mdr = rank_de_mdr[1:30]
+data_rna_UCEC_rank = data_rna_UCEC_transposed[genes_mdr,]
+eucD = dist(data_rna_UCEC_rank)
+
+#complete
+cl.hier4 <- hclust(eucD)
+plot(cl.hier4,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:complete, distância Euclidiana")
+
+#single
+cl.hier5 <- hclust(eucD, method="single")
+plot(cl.hier5,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:single, distância Euclidiana")
+
+#average
+cl.hier6 <- hclust(eucD, method="average")
+plot(cl.hier6,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 pacientes com menor p-value \nmétodo:average, distância Euclidiana")
+```
+
+Fazendo uma análise global dos três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 pacientes com um perfil genético mais diferenciado.
+Todavia, a escolha de clusters nos três tipos de abordagens é mais subjetiva e complicada.
+Desta forma, não conseguimos garantir uma divisão semelhante em clusters dos 30 pacientes, sendo este um aspecto que poderia causar dificuldade numa futura análise.
+
+##### Heatmap para os 30 genes
+
+Construi-se o heatmap para os 30 genes.
+
+##### Vale a pena pôr o heatmap?
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+heatmap(data_rna_UCEC_rank, labCol = F)
+```
+
+#### 2.2.k-means
+
+Esta abordagem de clustering os dados de forma a minimizar as distâncias entre os pontos e centróides dos clusters.
+Um método muito utilizado para auxiliar na determinação do número adequado de clusters é o “método do cotovelo”.
+Este método envolve a análise da variação da soma dos quadrados intra-cluster (WSS) em relação ao número de clusters.
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+ofs <- c()
+for (k in 2:10) {
+  kmeans <- kmeans(t(data_rna_UCEC_matrix), centers = k, nstart = 10)
+  ofs <- c(ofs, kmeans$tot.withinss)
+}
+plot_data <- data.frame(num_clusters = 2:10, wss = ofs)
+
+ggplot(plot_data, aes(x = num_clusters, y = wss)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Num Clusters", y = "WSS") +
+  theme_minimal()
+```
+
+Através da observação do gráfico é possível verificar que o ponto no gráfico que se assemelha a um “cotovelo” é o ponto com K=4.A partir do ponto k=4, a adição de mais clusters não resulta numa redução significativa da WSS.
+Partindo desse princípio, decidimos aplicar o algoritmo do Kmeans, tendo como referência o valor de 4 centróides, de modo a criar uma tabela que nos permitisse analisar a distribuição dos pacientes nos clusters em relação ao metadado estudado (vital_status).
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+#compara os clusters resultantes com uma variável categórica dos dados  (Qual o K??)
+resKmeans <- kmeans(t(data_rna_UCEC_matrix),centers=4)
+centroides=resKmeans$cluster
+table_result=table(centroides, ddsSE$vital_status)
+table_result
+```
+
+Observando a tabela, é possível verificar que existem clusters que têm uma separação diferenciada no que toca ao metadado analisado (vital_status), cumprindo o principal propósito do k-means.
+Todavia, existem clusters cuja separação não é a ideal.
+
+## Análise supervisionada
+
+### Bibliografia
+
+1.  Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries.
+    CA Cancer J Clin.
+    2021.
+    \doi: 10.3322/caac.21660.
+
+2.  Creasman WT, Odicino F, Maisonneuve P, Quinn MA, Beller U, Benedet JL, Heintz A, Ngan H, Pecorelli S. Carcinoma of the Corpus Uteri.
+    Int J Gynaecol Obstet.
+    2006.
+    \doi: 10.1016/S0020-7292(06)60031-3.
+
+3.  Leslie KK, Thiel KW, Goodheart MJ, De Geest K, Jia Y, Yang S. Endometrial cancer.
+    Obstet Gynecol Clin North Am.
+    2012.
+    \doi: 10.1016/j.ogc.2012.04.001.
+
+4.  Bhatla, N., Berek, J.S., Cuello Fredes, M., Denny, L.A., Grenman, S., Karunaratne, K., Kehoe, S.T., Konishi, I., Olawaiye, A.B., Prat, J.
+    and Sankaranarayanan, R. Revised FIGO staging for carcinoma of the cervix uteri†.
+    2019.
+    \doi: 10.1002/ijgo.12749.
+
+5.  Hong JY, An JY, Lee J, Park SH, Park JO, Park YS, Lim HY, Kim KM, Kang WK, Kim ST. Claudin 18.2 expression in various tumor types and its role as a potential target in advanced gastric cancer.
+    Transl Cancer Res. 2020.
+    \doi: 10.21037/tcr-19-1876.
+
+6.  Bianco B, Barbosa CP, Trevisan CM, Laganà AS, Montagna E. Endometrial cancer: a genetic point of view.
+    Transl Cancer Res. 2020.
+    \doi: 10.21037/tcr-20-2334.
