@@ -312,8 +312,7 @@ plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000121879.6"), in
 plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000133703.13"), intgroup="vital_status", pch = 19)
 
 
-# enrequecimento Ricardo
-
+# enriquecimento Ricardo
 # extração do nome de cada gene
 nome_gene=c()
 for (gene in rownames(resultados)) {
@@ -334,61 +333,32 @@ results_ord = resultados[order(-resultados[,"log2FoldChange"]), ]
 # Prepara os rankings para a FGSEA
 ranks = results_ord$log2FoldChange
 # associa às linhas o nome do gene
-names(ranks) <- results_ord$gene_name
+names(ranks) = results_ord$gene_name
+# Identificar genes duplicados
+duplicated_genes = names(ranks)[duplicated(names(ranks))]
+# Remover genes duplicados
+ranks = ranks[!names(ranks) %in% duplicated_genes]
 
 
-fgseaRes = fgsea(path, stats = ranks, minSize = 15, maxSize = 500)
-head(fgseaRes[order(padj), ])
+# Executar a análise FGSEA com os genes não duplicados
+fgseaRes = fgsea(pathways = path, stats = ranks, minSize = 15, maxSize = 500, nproc=1)
+# número de vias enriquecidas
+sum(fgseaRes[, padj<0.01])
 
+res_ordenado = fgseaRes[order(padj),]
+res_ordenado[res_ordenado[, padj<0.01]]
 
-#Enriquecimento
-get_entrez <- function(x) {
-  unlist(strsplit(x, split="[.]+"))[2]
-}
-#Busca anotações de genes e exibe as primeiras linhas do objeto
-ann <- AnnotationDbi::select(
-  org.Hs.eg.db, 
-  keys = sapply(rownames(resultados), get_entrez), 
-  columns = c("ENTREZID", "SYMBOL", "GENENAME"))
-head(ann)
+#salvar o resultado da análise de enriquecimento ordenado
+write.csv(as.data.frame(res_ordenado[,1:6]), file = "enrichemnt_analysiss.csv", row.names = T)
 
+# leitura dos resultados da análise de enriquecimento
+enrichment = enrichemnt_analysiss <- read.csv("C:/Users/ricar/Desktop/Trabalhos R/enrichemnt_analysiss.csv", row.names=1)
 
-# Combina os resultados da expressão diferencial com as anotações de genes
-all_results.annotated <- cbind(as.data.frame(resultados), ann)
-head(all_results.annotated)
+# através do ficheiro csv número de vias enriquecidas
+sum(enrichment$padj<0.01)
 
+head(enrichment)
 
-# Ordena os resultados pela alteração na expressão em ordem decrescente
-results.ord <- all_results.annotated[order(-all_results.annotated[,"log2FoldChange"]), ]
-# Prepara os rankings para a FGSEA
-ranks <- results.ord$log2FoldChange
-names(ranks) <- results.ord$ENTREZID
-
-
-pathways <- gmtPathways("C:/Users/Utilizador/Desktop/Universidade/Bioinformática 1º ano/2º Semestre/Extração de Conhecimento de Dados Biológicos/Enunciado do trabalho 1/h.all.v2023.2.Hs.entrez.gmt")
-
-
-# Executa a FGSEA
-fgseaRes <- fgsea(pathways, 
-                  stats = vetor,
-                  scoreType = 'std',
-                  minSize = 10, 
-                  maxSize = 1000)
-
-
-class(fgseaRes)
-dim(fgseaRes) 
-
-
-# Mostra as primeiras entradas ordenadas pelo p-valor ajustado
-head(fgseaRes[order(fgseaRes$padj), ])
-
-
-# Cria um gráfico de barras dos resultados da FGSEA
-ggplot(fgseaRes, aes(reorder(pathway, NES), NES)) +
-  geom_col(aes(fill=padj<0.05)) +
-  coord_flip() +
-  labs(x="Pathway", y="Normalized Enrichment Score", title="Hallmark pathways NES from GSEA")
 
 #PCA
 # Os PCs com menor variância são descartados para reduzir efetivamente a dimensionalidade dos dados sem perder informações.
