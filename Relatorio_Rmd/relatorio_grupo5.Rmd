@@ -544,7 +544,7 @@ Com base nesta análise, obtemos 791 genes subexpressos e 2593 sobreexpressos.
 Comparando com os resultados obtidos através do DESeq2 verifica-se que o edgeR identificou menos 47 genes diferencialmente expressos.
 A análise dos gráficos dos genes diferencialmente expressos de ambos os packages permite concluir que embora os packages tenham produzidos resultados ligeiramente diferentes a análise é bastante semelhante.
 Para esta abordagem o gene que apresentou diferença de expressão mais expressiva foi o gene ENSG00000066405.13 com um valor de PValue de 7.142125e-122.
-Este gene expressa a proteína ["claudin 18"](https://www.uniprot.org/uniprotkb/P56856/entry) que, segundo um estudo realizado 2020, não se encontra expresso em tecidos saudáveis com a exceção do tecido da mucosa gástrica, sendo comummente expresso em vários tipos diferentes de cancro [5].
+Este gene expressa a proteína ["claudin18"](https://www.uniprot.org/uniprotkb/P56856/entry) que, segundo um estudo realizado 2020, não se encontra expresso em tecidos saudáveis com a exceção do tecido da mucosa gástrica, sendo comummente expresso em vários tipos diferentes de cancro [5].
 Os nossos resultados sugerem que este gene pode ser um indicador da gravidade do cancro, uma vez que existe diferença significativa de expressão entre os dois níveis das amostras, no entanto, não há, até ao momento, nenhum estudo que correlaciona a expressão desta proteína com a gravidade do cancro endometrial.
 
 Segundo o estudo realizado por Bianco B et al. em 2020 [6] os genes mais comummente mutados neste tipo de cancro são PTEN(\>77%), PIK3CA (53%), PIK3R1 (37%), CTNNB1 (36%), ARID1A (35%), K-RAS (24%), CTCF (20%), RPL22 (12%), TP53 (11%), FGFR2 (11%) e ARID5B (11%).
@@ -821,16 +821,6 @@ plot(cl.hier6,xlab="", ylab="Distância", main="Dendograma da expressão dos 30 
 Fazendo uma análise global dos três métodos de medida de distância entre os clusters, podemos concluir que em todos se verifica a presença dos mesmos 30 pacientes com um perfil genético mais diferenciado.
 Todavia, a escolha de clusters nos três tipos de abordagens é mais subjetiva e complicada.
 Desta forma, não conseguimos garantir uma divisão semelhante em clusters dos 30 pacientes, sendo este um aspecto que poderia causar dificuldade numa futura análise.
-
-##### Heatmap para os 30 genes
-
-Construi-se o heatmap para os 30 genes.
-
-##### Vale a pena pôr o heatmap?
-
-```{r, echo=TRUE, message=FALSE, warning=FALSE}
-heatmap(data_rna_UCEC_rank, labCol = F)
-```
 
 #### 2.2.k-means
 
