@@ -194,9 +194,8 @@ Para esse efeito, optamos por separar os dados referentes à expressão genétic
 geneExp = SummarizedExperiment::assay(rna_seq_UCEC, "unstranded")
 ```
 
-Com o package **SummarizedExperiment** recorremos ao comando  **assay()** para extrair a matriz de contagens (ou matriz de expressão) do objeto SummarizedExperiment.
+Com o package **SummarizedExperiment** recorremos ao comando **assay()** para extrair a matriz de contagens (ou matriz de expressão) do objeto SummarizedExperiment.
 Esta matriz contém os dados numéricos de expressão para cada gene em cada amostra, que são essenciais para análises subsequentes, como normalização, análise de expressão diferencial e análise de enriquecimento.
-
 
 ## 3.Metadados
 
@@ -231,7 +230,8 @@ amostras_meta_reduzido$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras
 
 #### Estado Vital
 
-A coluna "vital_status", incorpora uma variável nominal  que representa a sobrevivência do paciente com cancro. Esta variável possui 3 categorias distintas: "Alive", "Dead", "NA".
+A coluna "vital_status", incorpora uma variável nominal que representa a sobrevivência do paciente com cancro.
+Esta variável possui 3 categorias distintas: "Alive", "Dead", "NA".
 Neste dataset verificou-se que, no momento de recolha das amostras, dos 589 pacientes, aproximadamente 81% estavam vivos e 16% tinham falecido, acerca dos restantes não havia informação disponível, sendo reportados como "NAs".
 
 ```{r, echo=FALSE}
@@ -264,7 +264,8 @@ pie(primary_comprimido, labels = paste(labels_primary, sprintf("%.1f%%", primary
 #### Estádio FIGO
 
 A coluna "figo_stage", incorpora uma variável ordinal que representa o estádio do cancro, nomeadamente no que diz respeito à sua extensão, especialmente se a doença se espalhou do local original para outras partes do corpo, conforme descrito pelos estádios da Federação Internacional de Ginecologia e Obstetrícia (FIGO) [4].
-Esta classificação está dividia em 4 estádios principais, nomeadamente, estádio I onde o tumor está confinado ao corpo uterino, estádio II onde já existe envolvimento do cérvix/colo uterino, estádio III que representa um atingimento de estruturas adjacentes do mesmo órgão, como, por exemplo, os gânglios linfáticos da zona pélvica. Por último, o estádio IV corresponde ao estado de doença em que já existem metástases noutros órgãos como por exemplo no intestino.
+Esta classificação está dividia em 4 estádios principais, nomeadamente, estádio I onde o tumor está confinado ao corpo uterino, estádio II onde já existe envolvimento do cérvix/colo uterino, estádio III que representa um atingimento de estruturas adjacentes do mesmo órgão, como, por exemplo, os gânglios linfáticos da zona pélvica.
+Por último, o estádio IV corresponde ao estado de doença em que já existem metástases noutros órgãos como por exemplo no intestino.
 
 Para além desta classificação em 4 estádios gerais, cada um destes estádios encontra-se subdividido em dois ou mais estádios consoante a extensão a outras estrututras.
 Neste estudo, para conseguirmos visualizar os dados de forma mais eficiente, e dado o objetivo deste trabalho, decidiu-se proceder a uma transformação desta coluna, agrupando os diferentes sub-estádios nas suas 4 categorias principais.
@@ -333,7 +334,7 @@ H1: Existem diferenças significativas na média das idades dos pacientes entre 
 
 Através do **shapiro.test()** verificou-se que os dados da variável "age_at_index" não são normais (p.value\<0.05).
 No entanto, através da análise do Q-Q Plot, com sobreposição da linha qqline, verificou-se que os pontos estão, na sua maioria, sobrepostos à linha diagonal e apenas as extremidades se afastam abaixo e acima da diagonal.
-Para além disso, estamos perante um grande volume de dados (n=574), ou seja, de acordo com o teorema do limite central, aceita-se a normalidade dos dados apesar de o valor de p-value do teste de shapiro  resultar na rejeição da hipótese nula.
+Para além disso, estamos perante um grande volume de dados (n=574), ou seja, de acordo com o teorema do limite central, aceita-se a normalidade dos dados apesar de o valor de p-value do teste de shapiro resultar na rejeição da hipótese nula.
 Garantindo a normalidade e a homogenidade das variâncias, procedeu-se à análise **anova one way** para verificar se existem ou não diferenças significativas na média das idades dos pacientes entre os diferentes estádios e obteve-se um valor de prova de 0.722, o que não permite rejeitar a hipótese nula, ou seja, não há diferenças significativas na média das idades dos pacientes entre os diferentes estádios.
 
 ```{r, echo=FALSE}
@@ -578,7 +579,9 @@ resultados[n_gene_DESeq2,]
 
 ```
 
-Uma análise mais detalhadas destes genes, revela que na realidade o gene ENSG00000121879.6, apresenta um comportamento semelhante em ambos os grupos, no entanto, o nível "Dead" apresenta maior variação dos resultados e, além disso, possui um menor número de amostras, e, por estas razões, o package identifica o gene como sendo diferencialmente expresso, uma vez que a variação leva a um aumento da média do grupo "Dead". Para o gene ENSG00000133703.13 os resultados parecem mais promissores, visto que, o grupo "Dead" apresenta resultados com menor variação, no entanto, não existe separação clara entre os dois grupos o que pode sugerir que se o dataset possuísse mais amostras para o grupo "Dead" o gene, muito possivelmente, não seria identificado como diferencialmente expresso. Por os motivos apresentados acima, não existe confiança de que, na realidade, este genes são diferencialmente expressos.
+Uma análise mais detalhadas destes genes, revela que na realidade o gene ENSG00000121879.6, apresenta um comportamento semelhante em ambos os grupos, no entanto, o nível "Dead" apresenta maior variação dos resultados e, além disso, possui um menor número de amostras, e, por estas razões, o package identifica o gene como sendo diferencialmente expresso, uma vez que a variação leva a um aumento da média do grupo "Dead".
+Para o gene ENSG00000133703.13 os resultados parecem mais promissores, visto que, o grupo "Dead" apresenta resultados com menor variação, no entanto, não existe separação clara entre os dois grupos o que pode sugerir que se o dataset possuísse mais amostras para o grupo "Dead" o gene, muito possivelmente, não seria identificado como diferencialmente expresso.
+Por os motivos apresentados acima, não existe confiança de que, na realidade, este genes são diferencialmente expressos.
 
 ```{r}
 plotCounts(ddsSE_norm, gene=which(rownames(resultados)=="ENSG00000121879.6"), intgroup="vital_status", pch = 19)
@@ -662,9 +665,11 @@ Conclui-se então que, embora a análise de expressão diferencial não produziu
 ### 1.Redução da dimensionalidade {.tabset}
 
 As técnicas Principal Component Analysis (PCA) e t-Distributed Stochastic Neighbor Embedding (t-SNE) são duas técnicas de redução de dimensionalidade amplamente utilizadas na análise de dados.
-Ambas têm como objetivo reduzir a complexidade dos dados, eliminando a redundância (muito caraterísitca em datasets desta natureza) permitindo a visualização e a compreensão de padrões ou estruturas subjacentes.Muitas vezes, é útil usar ambos em conjunto: PCA para uma visão geral dos dados e t-SNE para uma visualização mais detalhada e interpretação de padrões locais.
+Ambas têm como objetivo reduzir a complexidade dos dados, eliminando a redundância (muito caraterísitca em datasets desta natureza) permitindo a visualização e a compreensão de padrões ou estruturas subjacentes. Muitas vezes, é útil usar ambos em conjunto: PCA para uma visão geral dos dados e t-SNE para uma visualização mais detalhada e interpretação de padrões locais.
 
 #### 1.1. PCA (Principal Component Analysis)
+
+**Refazer tudo e tirar novas concluões**
 
 ```{r, echo=FALSE}
 pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
@@ -674,26 +679,26 @@ min(which(summary(pcares1)$importance[3,]>0.95))
 pcares1$rotation[, 1:20]
 ```
 
-No nosso caso, podemos verificar que das 423 variáveis, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
+No nosso caso, verificou-se que das 423 amostras, necessitaríamos apenas de 20 componentes principais para explicar pelo menos 95% da variabilidade dos nossos dados.
 Através do plot dos componentes principais, podemos verificar que os primeiros dois contribuem de forma mais significativa para a explicação da variabilidade dos dados.
-No entanto, através do biplot desses dois componentes, não conseguimos verificar nenhuma divisão clara dos dados.
+No entanto, através do biplot desses dois componentes, não se consegui verificar nenhuma divisão clara dos dados.
 
 ```{r, echo=FALSE}
 plot(pcares1)
 biplot(pcares1)
 ```
 
-Quer a nível do metadado "figo_stage", quer a nível do "vital_status", não conseguimos identificar uma sepração clara dos grupos com base nos componentes principais.
+Quer a nível do metadado "figo_stage", quer a nível do "vital_status", não conseguimos identificar uma separação clara dos grupos com base nos componentes principais.
 
 ```{r, echo=FALSE}
 amostras_filtradas$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_filtradas$figo_stage) #recuperar transformação inicial
-amostras_filtradas$figo_stage <- factor(amostras_filtradas$figo_stage)
-cores_estagio <- rainbow(length(levels(amostras_filtradas$figo_stage)))
+amostras_filtradas$figo_stage = factor(amostras_filtradas$figo_stage)
+cores_estagio = rainbow(length(levels(amostras_filtradas$figo_stage)))
 plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
 ```
 
 ```{r, echo=FALSE}
-amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
+amostras_filtradas$vital_status = factor(amostras_filtradas$vital_status)
 plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 ```
 
@@ -711,7 +716,7 @@ amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
 plot(res_tnse$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 ```
 
-Aplicando a técnica tSNE chegamos à mesma conclusão que haviamos chegado com a técnica de PCA, não havendo uma separação clara entre grupos no que diz respeito ao "figo_stage" e ao "vital_status".
+Aplicando a técnica tSNE chegou-se à mesma conclusão que havíamos chegado com a técnica de PCA, não havendo uma separação clara entre grupos no que diz respeito ao "figo_stage" e ao "vital_status".
 
 ### 2.Clustering
 
@@ -719,42 +724,40 @@ O clustering é uma técnica de aprendizagem não supervisionada que identifica 
 Utiliza medidas de distância ou similaridade para agrupar pontos de dados próximos, procurando maximizar a coesão intra-cluster e a separação inter-cluster.
 Esses grupos podem revelar insights sobre a estrutura subjacente dos dados.
 
-No nosso relatório, abordamos dois algoritmos de clustering: K-means, que é um algoritmo de clustering que divide um conjunto de dados em K clusters, minimizando a soma dos quadrados das distâncias entre os pontos e os centroides; clustering hierárquico, que constrói uma árvore de clusters, onde cada nó representa um cluster.
+No nosso relatório, foram abordados dois algoritmos de clustering: K-means, que é um algoritmo de clustering que divide um conjunto de dados em K clusters, minimizando a soma dos quadrados das distâncias entre os pontos e os centroides; e clustering hierárquico, que constrói uma árvore de clusters, onde cada nó representa um cluster.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
-ddsSE_norm <- DESeq(ddsSE) 
-data_rna_UCEC_matrix <- as.matrix(assay(ddsSE_norm))
-data_rna_UCEC_transposed <- t(data_rna_UCEC_matrix)
+data_rna_UCEC_matrix = as.matrix(assay(ddsSE_norm))
+data_rna_UCEC_transposed = t(data_rna_UCEC_matrix)
 ```
 
-Com o objetivo de preparar os dados para o clustering, começa-se com a normalização dos dados de expressão gênica **(ddsSE)** usando o método DESeq.
-Em seguida, os dados normalizados são convertidos numa matriz **(data_rna_UCEC_matrix)**.
-Posteriormente, a matriz é transposta para que as linhas se tornem colunas e vice-versa **(data_rna_UCEC_transposed)**.
-Essa transposição pode ser útil em análises posteriores, como por exemplo, quando se deseja ter genes como linhas e amostras como colunas.
+Como na análise de expressão diferencial, já se procedeu à normalização dos dados das contagens, não é necessário realizar nova normalização dos dados, no entanto, é necessário realizar a conversão para uma matriz, uma vez que os dados estão armazenados num objeto DESeqDataSet, e o clustering requer a presença das amostras nas linhas e nas colunas os genes. Após a obtenção da matriz realizou-se a conversão para a sua transposta.
+
 
 #### 2.1.Hierárquico {.tabset}
 
 Este tipo de clustering baseia-se na probabilidade de pertencer a um grupo e segue uma abordagem aglomerativa (recorrendo à estratégia bottom-up), começando pelas folhas até à raiz da árvore.
-Os clusters são representados pelos nós.
 A análise do cluster hierárquico usa a distância Euclidiana para calcular a proximidade entre os pontos num espaço multidimensional, considerando todas as dimensões.
-Após calcular a matriz Euclidiana, diferentes métodos podem ser usados para calcular a distância entre os clusters, como por exemplo: single linkage, complete linkage ou average linkage.
-As 3 formas estão codificadas de seguida.
-Além disso, podemos aplicar essa técnica agrupando genes ou pacientes.
+Após se calcular a matriz Euclidiana, diferentes métodos podem ser utilizados para calcular a distância entre os clusters, como por exemplo: single linkage, complete linkage ou average linkage. Além disso, pode-se aplicar esta técnica agrupando-se genes ou pacientes.
 
-```{r, results='hide', warning = FALSE, message=FALSE}
+```{r, results='hide'}
+#teste estatístico para cada gene na matriz de dados de RNA. Determina se há diferenças significativas na expressão genética entre diferentes condições ou grupos experimentais
+tt_mdr = rowttests(data_rna_UCEC_transposed) 
+#ranking crescente dos genes com base nos seus pvalues
+rank_mdr = order(tt_mdr$p.value) 
+#seleciona os índices dos 30 menores valores-p
+genes_mdr = rank_mdr[1:30]
+#cria uma nova matriz que contém apenas as linhas correspondentes aos 30 genes mais diferencialmente expressos
+data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,] 
+
+
 #calculo da matriz euclidiana
-tt_mdr = rowttests(t(data_rna_UCEC_matrix)) #teste estatístico para cada gene na matriz de dados de RNA. Determina se há diferenças significativas na expressão gênica entre diferentes condições ou grupos experimentais
-rank_mdr = order(tt_mdr$p.value) #ranking crescente dos genes com base nos seus pvalues
-genes_mdr = rank_mdr[1:30] #seleciona os índices dos 30 menores valores-p
-data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,] #cria uma nova matriz que contém apenas as linhas correspondentes aos 30 genes mais diferencialmente expressos
-
 eucD = dist(data_rna_UCEC_rank)
 ```
 
-Com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de testes estatísticos t para cada gene, na matriz de dados, determinando diferenças na expressão genética entre grupos experimentais.
-De seguida, classificam-se os genes com base nos valores p.
-Posteriormente, selecionaram-se os 30 genes com menores valores p, e criou-se uma nova matriz com as linhas correspondentes a esses genes.
-Por fim, calcula-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
+Com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de testes estatísticos ttest para cada gene, na matriz de dados, determinando diferenças na expressão genética entre grupos experimentais.
+De seguida, classificou-se os genes com base nos seu p-values. Posteriormente, selecionou-se os 30 genes com menores valores p, e criou-se uma nova matriz com as linhas correspondentes a esses genes.
+Por fim, calculou-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
 
 ##### Por genes
 
@@ -854,15 +857,30 @@ Todavia, existem clusters cuja separação não é a ideal.
 
 ### Bibliografia
 
-1.  Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries. CA Cancer J Clin. 2021. doi: 10.3322/caac.21660.
+1.  Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries.
+    CA Cancer J Clin.
+    2021.
+    doi: 10.3322/caac.21660.
 
-2.  Creasman WT, Odicino F, Maisonneuve P, Quinn MA, Beller U, Benedet JL, Heintz A, Ngan H, Pecorelli S. Carcinoma of the Corpus Uteri. Int J Gynaecol Obstet. 2006. doi: 10.1016/S0020-7292(06)60031-3.
+2.  Creasman WT, Odicino F, Maisonneuve P, Quinn MA, Beller U, Benedet JL, Heintz A, Ngan H, Pecorelli S. Carcinoma of the Corpus Uteri.
+    Int J Gynaecol Obstet.
+    2006.
+    doi: 10.1016/S0020-7292(06)60031-3.
 
 3.  Leslie KK, Thiel KW, Goodheart MJ, De Geest K, Jia Y, Yang S. Endometrial cancer.
-    Obstet Gynecol Clin North Am. 2012. doi: 10.1016/j.ogc.2012.04.001.
+    Obstet Gynecol Clin North Am.
+    2012.
+    doi: 10.1016/j.ogc.2012.04.001.
 
-4.  Bhatla, N., Berek, J.S., Cuello Fredes, M., Denny, L.A., Grenman, S., Karunaratne, K., Kehoe, S.T., Konishi, I., Olawaiye, A.B., Prat, J. and Sankaranarayanan, R. Revised FIGO staging for carcinoma of the cervix uteri†. 2019. doi: 10.1002/ijgo.12749.
+4.  Bhatla, N., Berek, J.S., Cuello Fredes, M., Denny, L.A., Grenman, S., Karunaratne, K., Kehoe, S.T., Konishi, I., Olawaiye, A.B., Prat, J.
+    and Sankaranarayanan, R. Revised FIGO staging for carcinoma of the cervix uteri†.
+    2019.
+    doi: 10.1002/ijgo.12749.
 
-5.  Hong JY, An JY, Lee J, Park SH, Park JO, Park YS, Lim HY, Kim KM, Kang WK, Kim ST. Claudin 18.2 expression in various tumor types and its role as a potential target in advanced gastric cancer. Transl Cancer Res. 2020. doi: 10.21037/tcr-19-1876.
+5.  Hong JY, An JY, Lee J, Park SH, Park JO, Park YS, Lim HY, Kim KM, Kang WK, Kim ST. Claudin 18.2 expression in various tumor types and its role as a potential target in advanced gastric cancer.
+    Transl Cancer Res. 2020.
+    doi: 10.21037/tcr-19-1876.
 
-6.  Bianco B, Barbosa CP, Trevisan CM, Laganà AS, Montagna E. Endometrial cancer: a genetic point of view. Transl Cancer Res. 2020. doi: 10.21037/tcr-20-2334.
+6.  Bianco B, Barbosa CP, Trevisan CM, Laganà AS, Montagna E. Endometrial cancer: a genetic point of view.
+    Transl Cancer Res. 2020.
+    doi: 10.21037/tcr-20-2334.
