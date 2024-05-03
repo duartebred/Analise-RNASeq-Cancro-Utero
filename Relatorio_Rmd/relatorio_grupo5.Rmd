@@ -824,7 +824,7 @@ Esta abordagem de clustering, agrupa os dados de forma a minimizar as distância
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 ofs <- c()
 for (k in 2:10) {
-  kmeans <- kmeans(t(data_rna_UCEC_matrix), centers = k, nstart = 10)
+  kmeans <- kmeans(data_rna_UCEC_transposed), centers = k, nstart = 10)
   ofs <- c(ofs, kmeans$tot.withinss)
 }
 plot_data <- data.frame(num_clusters = 2:10, wss = ofs)
@@ -841,7 +841,7 @@ Partindo desse princípio, decidiu-se aplicar o algoritmo do K-means, tendo como
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 #compara os clusters resultantes com uma variável categórica dos dados  (Qual o K??)
-resKmeans <- kmeans(t(data_rna_UCEC_matrix),centers=4)
+resKmeans <- kmeans(data_rna_UCEC_transposed,centers=4)
 centroides=resKmeans$cluster
 table_result=table(centroides, ddsSE$vital_status)
 table_result
