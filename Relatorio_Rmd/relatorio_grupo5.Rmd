@@ -1,6 +1,6 @@
 ---
 title: "Carcinoma do endométrio do corpo uterino"
-author: "Duarte Velho(pg53841), Joana Lopes(pg53498), João Ferreira(pg52182), Ricardo Oliveira(pg53501)"
+author: "Duarte Velho(pg53841), Joana Lopes(pg53498), Ricardo Oliveira(pg53501)"
 date: "`r Sys.Date()`"
 output:
   html_document:
