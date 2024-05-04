@@ -655,6 +655,48 @@ cat("Sensibilidade:", sensitivity, "\n")
 
 #Decision Tree
 
+cv.control <- trainControl(method = "repeatedcv",
+                           number = 10,
+                           repeats = 5,
+                           index = lapply(folds$splits, function(x) x$in_id),
+                           indexOut = lapply(folds$splits, function(x) x$out_id),
+                           savePredictions = "final",
+                           classProbs = TRUE)  
+
+# Treinar o modelo de árvore de decisão
+set.seed(16718)
+tree_model <- train(vital ~ ., data = data_set_treino, method = "rpart", 
+                    tuneLength = 10, 
+                    trControl = cv.control)
+
+# Obter o melhor hiperparâmetro
+best_cp <- tree_model$bestTune$cp
+cat("Melhor cp:", best_cp, "\n")
+
+# Treinar o modelo final com o melhor hiperparâmetro
+final_model <- rpart(vital ~ ., data = data_set_treino, method = "class", cp = best_cp)
+
+# Fazer previsões em novos dados
+pred_tree <- predict(final_model, newdata = data_set_teste, type = "class")
+
+# Métricas
+confusion_matrix <- confusionMatrix(pred_tree, data_set_teste$vital)
+precision <- confusion_matrix$byClass["Pos Pred Value"]
+recall <- confusion_matrix$byClass["Sensitivity"]
+accuracy <- confusion_matrix$overall["Accuracy"]
+f1_score <- confusion_matrix$byClass["F1"]
+sensitivity <- confusion_matrix$byClass["Sensitivity"]
+
+# Imprimir as métricas
+print(confusion_matrix)
+cat("Precisão:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("Acurácia:", accuracy, "\n")
+cat("F1 Score:", f1_score, "\n")
+cat("Sensibilidade:", sensitivity, "\n")
+
+
+
 #SVM
 
 #Neurol Networks
