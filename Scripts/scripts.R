@@ -364,31 +364,34 @@ head(enrichment)
 #Ela faz isso encontrando novas variáveis, chamadas componentes principais, que explicam a maior parte da variação nos dados 
 #originais. Essas novas variáveis são criadas por combinações lineares das variáveis originais.
 
-pcares1 = prcomp(dados_EA_CPM, scale = F)    #já estao normalizados
+dim(dados_EA_CPM) #genes nas linhas e amostras nas colunas
+
+dados_pca=t(dados_EA_CPM)  #colocar as amostras nas colunas e os genes nas linhas
+dim(dados_pca)
+
+pcares1 <- prcomp(dados_pca, scale = F) #dados já normalizados
+
 summary(pcares1)$importance[3, ]
 
-"encontrar o número de componentes principais necessários para explicar pelo menos 95% da variância dos dados."
-
 min(which(summary(pcares1)$importance[3,]>0.95))
-pcares1$rotation[, 1:20]
+pcares1$rotation[, 1:47]
 
 plot(pcares1)
 biplot(pcares1)
 
-
 amostras_filtradas$figo_stage = gsub(".*\\b(Stage [VI]+).*", "\\1", amostras_filtradas$figo_stage) #recuperar transformação inicial
 amostras_filtradas$figo_stage <- factor(amostras_filtradas$figo_stage)
 cores_estagio <- rainbow(length(levels(amostras_filtradas$figo_stage)))
-plot(pcares$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
+plot(pcares1$x, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
 
 
 amostras_filtradas$vital_status <- factor(amostras_filtradas$vital_status)
-plot(pcares$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
+plot(pcares1$x, col=as.integer(amostras_filtradas$vital_status), pch = 19)
 
 #tSNE
 
-Rtsne(dados_EA_CPM)
-dados_EA_CPM_nd = dados_EA_CPM[!duplicated(dados_EA_CPM),]
+Rtsne(dados_pca)
+dados_EA_CPM_nd = dados_pca[!duplicated(dados_pca),]
 dim(dados_EA_CPM_nd)
 res_tnse = Rtsne(dados_EA_CPM_nd)
 plot(res_tnse$Y, col = cores_estagio[amostras_filtradas$figo_stage], pch = 19)
