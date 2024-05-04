@@ -540,3 +540,63 @@ cv.control <- trainControl(method = "repeatedcv",
 
 #N-Nearest Neighbors
 
+set.seed(16718)
+
+# Criar dobras para validação cruzada diretamente com funções do pacote caret
+folds <- createFolds(data_set_treino$vital, k = 10, list = TRUE)
+
+# Configurar o controle de treinamento com índices corretos
+cv.control <- trainControl(method = "cv",
+                           number = 10,
+                           index = folds,
+                           savePredictions = "final",
+                           classProbs = TRUE)
+
+# Treinar o modelo k-NN com uma grade de hiperparâmetros para k
+knn_model <- train(vital ~ ., data = data_set_treino, method = "knn",
+                   tuneGrid = expand.grid(k = 1:10),
+                   trControl = cv.control)
+
+# Identificar o melhor k
+best_k <- knn_model$bestTune$k
+
+# Testar o modelo com o conjunto de teste
+pred_knn <- predict(knn_model, newdata = data_set_teste)
+
+# Criar a matriz de confusão
+confusion_matrix <- confusionMatrix(pred_knn, data_set_teste$vital)
+
+# Métricas de desempenho
+precision <- confusion_matrix$byClass["Pos Pred Value"]
+recall <- confusion_matrix$byClass["Sensitivity"]
+accuracy <- confusion_matrix$overall["Accuracy"]
+f1_score <- confusion_matrix$byClass["F1"]
+sensitivity <- confusion_matrix$byClass["Sensitivity"]
+
+# Imprimir as métricas
+cat("Melhor k:", best_k, "\n")
+cat("Precisão:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("Acurácia:", accuracy, "\n")
+cat("F1 Score:", f1_score, "\n")
+cat("Sensibilidade:", sensitivity, "\n")
+
+
+
+#Naive Bayes
+
+
+
+
+
+#Random Forest
+
+#Decision Tree
+
+#SVM
+
+#Neurol Networks
+
+
+
+
