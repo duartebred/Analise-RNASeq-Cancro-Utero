@@ -488,5 +488,44 @@ table_result=table(centroides, ddsSE$vital_status)
 table_result
 
 
+# machine learning
+
+# para esta fase vamos usar os dados da análise diferencial do edgeR
+set.seed(123456)
+
+#extrair os dados das contagens normalizados
+rna_data = data.frame(dgeObj$counts)
+# ordenar os resultados da expressão diferencial em função do pvalue
+filtered_results_ord = filtered_results$table[order(filtered_results$table$PValue),]
+
+rna_data_vital_status = as.data.frame(cbind(vital = amostras_filtradas$vital_status, t(rna_data)))
+
+rna_data_vital_status$vital = as.factor(rna_data_vital_status$vital)
+
+# filtrar para usar apenas os genes que são considerados diferencialmente expressos
+# pois o dataset é muito grande o que vai tornar a análise do machine learning muito pesado
+de_genes = rownames(head(filtered_results_ord,1519))
+
+# filtrar os genes diferncialmente expressos
+
+rna_data_filtered = rna_data_vital_status[,c("vital",de_genes)]
+
+# criação dos dados de treino e de teste, vamos usar um modelo 70% treino e 30%teste
+# seleção das amostras que irão ser usadas para treino e para teste
+idx = sample(2, nrow(rna_data_filtered), replace = T, prob=c(0.7,0.3))
+
+# filtragem das amostras de treino
+data_set_treino = rna_data_filtered[idx == 1,] 
+# filtragem das amostras de teste
+data_set_teste = rna_data_filtered[idx == 2,]
+
+# análise das dimensões dos treinos e testes
+dim(data_set_treino)
+dim(data_set_teste)
+
+# análise das proporções para garantir que os modelos vão corresponder à realidade dos dados
+table(rna_data_filtered$vital)/sum(table(rna_data_filtered$vital))
+table(data_set_treino$vital)/sum(table(data_set_treino$vital))
+table(data_set_teste$vital)/sum(table(data_set_teste$vital))
 
 
