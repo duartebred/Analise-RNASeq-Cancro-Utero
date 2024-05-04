@@ -52,7 +52,7 @@ rna_seq_UCEC  <- GDCprepare(query = query_TCGA_UCEC, save = TRUE, save.filename 
 #loading dos dados a partir dos ficheiros criados no GDCprepare
 rna_seq_UCEC= get(load("C:/Users/Asus/Downloads/mRNA_TCGA-UCEC.rda"))
 #loading ricardo
-rna_seq_UCEC= get(load("C:/Users/ricar/Downloads/mRNA_TCGA-UCEC.rda"))
+rna_seq_UCEC= get(load("mRNA_TCGA-UCEC.rda"))
 
 # analise da estrutura dos dados descarregados
 class(rna_seq_UCEC)
@@ -351,7 +351,7 @@ res_ordenado[res_ordenado[, padj<0.01]]
 write.csv(as.data.frame(res_ordenado[,1:6]), file = "enrichemnt_analysiss.csv", row.names = T)
 
 # leitura dos resultados da análise de enriquecimento
-enrichment = enrichemnt_analysiss <- read.csv("C:/Users/ricar/Desktop/Trabalhos R/enrichemnt_analysiss.csv", row.names=1)
+enrichment = enrichemnt_analysiss <- read.csv("enrichemnt_analysiss.csv", row.names=1)
 
 # através do ficheiro csv número de vias enriquecidas
 sum(enrichment$padj<0.01)
@@ -528,4 +528,15 @@ table(rna_data_filtered$vital)/sum(table(rna_data_filtered$vital))
 table(data_set_treino$vital)/sum(table(data_set_treino$vital))
 table(data_set_teste$vital)/sum(table(data_set_teste$vital))
 
+
+# Criar as dobras estratificadas usando o pacote rsample para o conjunto de dados filtrado
+folds <- vfold_cv(rna_data_filtered, strata = "vital", v = 10)
+
+# Configurar o objeto trainControl com as dobras estratificadas
+cv.control <- trainControl(method = "repeatedcv", 
+                           number = 10, 
+                           repeats = 5, 
+                           index = folds$splits)
+
+#N-Nearest Neighbors
 
