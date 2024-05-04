@@ -619,6 +619,38 @@ cat("Sensibilidade:", sensitivity, "\n")
 
 #Random Forest
 
+cv.control <- trainControl(method = "repeatedcv", 
+                           number = 10, 
+                           repeats = 5, 
+                           index = lapply(folds$splits, function(x) x$in_id),
+                           indexOut = lapply(folds$splits, function(x) x$out_id),
+                           savePredictions = "final",
+                           classProbs = TRUE)  
+
+# Treinar o modelo Random Forest
+set.seed(16718)
+rf_model <- train(vital ~ ., data = data_set_treino, method = "rf", 
+                  tuneLength = 10,  
+                  trControl = cv.control)
+
+# Testar o modelo com o conjunto de teste
+pred_rf <- predict(rf_model, newdata = data_set_teste)
+
+# Criar a matriz de confusão
+confusion_matrix <- confusionMatrix(pred_rf, data_set_teste$vital)
+precision <- confusion_matrix$byClass["Pos Pred Value"]
+recall <- confusion_matrix$byClass["Sensitivity"]
+accuracy <- confusion_matrix$overall["Accuracy"]
+f1_score <- confusion_matrix$byClass["F1"]
+sensitivity <- confusion_matrix$byClass["Sensitivity"]
+
+# Imprimir as métricas
+print(confusion_matrix)
+cat("Precisão:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("Acurácia:", accuracy, "\n")
+cat("F1 Score:", f1_score, "\n")
+cat("Sensibilidade:", sensitivity, "\n")
 
 
 #Decision Tree
