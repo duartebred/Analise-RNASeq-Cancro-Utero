@@ -500,27 +500,24 @@ set.seed(123456)
 rna_data = data.frame(dgeObj$counts)
 # ordenar os resultados da expressão diferencial em função do pvalue
 filtered_results_ord = filtered_results$table[order(filtered_results$table$PValue),]
-
 rna_data_vital_status = as.data.frame(cbind(vital = amostras_filtradas$vital_status, t(rna_data)))
-
 rna_data_vital_status$vital = as.factor(rna_data_vital_status$vital)
 
 # filtrar para usar apenas os genes que são considerados diferencialmente expressos
 # pois o dataset é muito grande o que vai tornar a análise do machine learning muito pesado
 de_genes = rownames(head(filtered_results_ord,1519))
-
-# filtrar os genes diferncialmente expressos
-
 rna_data_filtered = rna_data_vital_status[,c("vital",de_genes)]
 
+
 # criação dos dados de treino e de teste, vamos usar um modelo 70% treino e 30%teste
-# seleção das amostras que irão ser usadas para treino e para teste
 idx = sample(2, nrow(rna_data_filtered), replace = T, prob=c(0.7,0.3))
 
 # filtragem das amostras de treino
 data_set_treino = rna_data_filtered[idx == 1,] 
 # filtragem das amostras de teste
-data_set_teste = rna_data_filtered[idx == 2,]
+dataset_teste = rna_data_filtered[idx == 2,]
+
+summary(data_set_treino) == summary(data_set_teste)
 
 # análise das dimensões dos treinos e testes
 dim(data_set_treino)
@@ -533,91 +530,78 @@ table(data_set_teste$vital)/sum(table(data_set_teste$vital))
 
 
 # Criar as dobras estratificadas usando o pacote rsample para o conjunto de dados filtrado
-folds <- vfold_cv(rna_data_filtered, strata = "vital", v = 10)
-
+#folds = rsample::vfold_cv(rna_data_filtered, strata = "vital", v = 10)
 # Configurar o objeto trainControl com as dobras estratificadas
-cv.control <- trainControl(method = "repeatedcv", 
-                           number = 10, 
-                           repeats = 5, 
-                           index = folds$splits)
+#cv.control = caret::trainControl(method = "repeatedcv", number = 10, repeats = 5, index = folds$splits)
 
 #N-Nearest Neighbors
-
-set.seed(16718)
-
+set.seed(123456)
 # Criar dobras para validação cruzada diretamente com funções do pacote caret
-folds <- createFolds(data_set_treino$vital, k = 10, list = TRUE)
-
+folds = caret::createFolds(data_set_treino$vital, k = 10, list = TRUE)
 # Configurar o controle de treinamento com índices corretos
-cv.control <- trainControl(method = "cv",
-                           number = 10,
-                           index = folds,
-                           savePredictions = "final",
+cv_control = caret::trainControl(method = "cv", number = 10, index = folds, savePredictions = "final",
                            classProbs = TRUE)
 
 # Treinar o modelo k-NN com uma grade de hiperparâmetros para k
-knn_model <- train(vital ~ ., data = data_set_treino, method = "knn",
-                   tuneGrid = expand.grid(k = 1:10),
-                   trControl = cv.control)
+knn_model = caret::train(vital ~ ., data = data_set_treino[,1:800], method = "knn",
+                  tuneGrid = expand.grid(k = 1:15), trControl = cv_control)
 
 # Identificar o melhor k
-best_k <- knn_model$bestTune$k
+best_k_knn = knn_model$bestTune$k
 
 # Testar o modelo com o conjunto de teste
-pred_knn <- predict(knn_model, newdata = data_set_teste)
+pred_knn = predict(knn_model, newdata = dataset_teste[,1:800])
+pred_knn = predict(knn_model, newdata = data_set_treino[,1:800])
 
 # Criar a matriz de confusão
-confusion_matrix <- confusionMatrix(pred_knn, data_set_teste$vital)
-
+confusion_matrix = confusionMatrix(pred_knn, data_set_teste$vital)
+confusion_matrix_knn = confusionMatrix(pred_knn, data_set_treino$vital)
+confusion_matrix_knn
 # Métricas de desempenho
-precision <- confusion_matrix$byClass["Pos Pred Value"]
-recall <- confusion_matrix$byClass["Sensitivity"]
-accuracy <- confusion_matrix$overall["Accuracy"]
-f1_score <- confusion_matrix$byClass["F1"]
-sensitivity <- confusion_matrix$byClass["Sensitivity"]
+precision_knn = confusion_matrix_knn$byClass["Pos Pred Value"]
+recall_knn = confusion_matrix_knn$byClass["Sensitivity"]
+accuracy_knn = confusion_matrix_knn$overall["Accuracy"]
+f1_score_knn = confusion_matrix_knn$byClass["F1"]
+sensitivity_knn = confusion_matrix_knn$byClass["Sensitivity"]
 
 # Imprimir as métricas
-cat("Melhor k:", best_k, "\n")
-cat("Precisão:", precision, "\n")
-cat("Recall:", recall, "\n")
-cat("Acurácia:", accuracy, "\n")
-cat("F1 Score:", f1_score, "\n")
-cat("Sensibilidade:", sensitivity, "\n")
-
+cat("Melhor k:", best_k_knn, "\n")
+cat("Precisão:", precision_knn, "\n")
+cat("Recall:", recall_knn, "\n")
+cat("Acurácia:", accuracy_knn, "\n")
+cat("F1 Score:", f1_score_knn, "\n")
+cat("Sensibilidade:", sensitivity_knn, "\n")
 
 
 #Naive Bayes
 
-cv.control <- trainControl(method = "repeatedcv", 
-                           number = 10, 
-                           repeats = 5, 
-                           index = lapply(folds$splits, function(x) x$in_id),
-                           indexOut = lapply(folds$splits, function(x) x$out_id),
-                           savePredictions = "final",
-                           classProbs = TRUE)  
+#cv.control = trainControl(method = "repeatedcv", number = 10, repeats = 5, 
+#        index = lapply(folds$splits, function(x) x$in_id),
+#        indexOut = lapply(folds$splits, function(x) x$out_id),
+#        savePredictions = "final", classProbs = TRUE)  
 
 # Treinar o modelo Naive Bayes
-set.seed(16718)
-nb_model <- train(vital ~ ., data = data_set_treino, method = "nb", trControl = cv.control)
+set.seed(123456)
+nb_model = train(vital ~ ., data = data_set_treino[,1:800], method = "nb", trControl = cv.control)
 
 # Testar o modelo com o conjunto de teste
-pred_nb <- predict(nb_model, newdata = data_set_teste)
+pred_nb = predict(nb_model, newdata = data_set_teste)
 
 # Criar a matriz de confusão
-confusion_matrix <- confusionMatrix(pred_nb, data_set_teste$vital)
-precision <- confusion_matrix$byClass["Pos Pred Value"]
-recall <- confusion_matrix$byClass["Sensitivity"]
-accuracy <- confusion_matrix$overall["Accuracy"]
-f1_score <- confusion_matrix$byClass["F1"]
-sensitivity <- confusion_matrix$byClass["Sensitivity"]
+confusion_matrix_nb = confusionMatrix(pred_nb, data_set_teste$vital)
+precision_nb = confusion_matrix$byClass["Pos Pred Value"]
+recall_nb = confusion_matrix$byClass["Sensitivity"]
+accuracy_nb = confusion_matrix$overall["Accuracy"]
+f1_score_nb = confusion_matrix$byClass["F1"]
+sensitivity_nb = confusion_matrix$byClass["Sensitivity"]
 
 # Imprimir as métricas
-print(confusion_matrix)
-cat("Precisão:", precision, "\n")
-cat("Recall:", recall, "\n")
-cat("Acurácia:", accuracy, "\n")
-cat("F1 Score:", f1_score, "\n")
-cat("Sensibilidade:", sensitivity, "\n")
+print(confusion_matrix_nb)
+cat("Precisão:", precision_nb, "\n")
+cat("Recall:", recall_nb, "\n")
+cat("Acurácia:", accuracy_nb, "\n")
+cat("F1 Score:", f1_score_nb, "\n")
+cat("Sensibilidade:", sensitivity_n, "\n")
 
 
 #Random Forest
@@ -631,7 +615,7 @@ cv.control <- trainControl(method = "repeatedcv",
                            classProbs = TRUE)  
 
 # Treinar o modelo Random Forest
-set.seed(16718)
+set.seed(123456)
 rf_model <- train(vital ~ ., data = data_set_treino, method = "rf", 
                   tuneLength = 10,  
                   trControl = cv.control)
@@ -667,7 +651,7 @@ cv.control <- trainControl(method = "repeatedcv",
                            classProbs = TRUE)  
 
 # Treinar o modelo de árvore de decisão
-set.seed(16718)
+set.seed(123456)
 tree_model <- train(vital ~ ., data = data_set_treino, method = "rpart", 
                     tuneLength = 10, 
                     trControl = cv.control)
