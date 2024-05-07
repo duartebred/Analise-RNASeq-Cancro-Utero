@@ -857,6 +857,100 @@ Observando a tabela, verificou-ser que existem clusters que têm uma separação
 
 ## Análise supervisionada
 
+A análise supervisionada é uma abordagem de machine learning na qual os modelos são treinados com um conjunto de dados de entrada, juntamente com os rótulos associados a esses dados. Durante o treino, o modelo aprende a relação entre os dados de entrada e a sua classificação através de ajustes iterativos de modo a minimizar o erro entre as previsões e as classificações dos dados de treino. Após o treino, os modelos são utilizados para realizar a previsão da classificação de um novo conjunto de dados em que não se sabe a sua classificação.
+
+Para dados de expressão, os modelos de machine learning podem ser utilizados para vários fins. Estes modelos são, por exemplo, utilizados para realizar a previsão de fenótipos com base no perfil de expressão genética sendo úteis para prever a resposta de um paciente a um determinado tratamento ou para prever a gravidade da doença e como esta poderá progredir com o tempo.
+
+A primeira fase de machine learning consite na preparação dos dados de expressão genética para posteriomente serem utilizados para o treino do modelo e consequente teste do modelo. Para isso primeiro definui-se uma seed de modo a tornar os resultados replicávies.
+Em seguida, extrai-se para um data frame os dados das contagens normalizadas presentes no objeto dgeObj. Posteriormente, os resultados da análise de expressão diferencial foram ordenados por ordem crescente de Pvalue, com o intuito de filtrar os genes para apenas serem utilizados para o treino do modelo os genes diferencialmente expressos, uma vez que os restantes não apresentam variações de expressão significativas e por isso não são bons genes para a classificação das amostras. É importante referir que se realizou a transposta da matriz de contagens, uma vez que o objetivo do machine learning consiste na classificação das amostras com base nos dados de expressão e , para isso, os genes necessitam de estar posicionados nas colunas.
+
+Após a filtragem dos genes diferencilamente expressos, procedeu-se à criação do dataset de treino e de teste sendo que se utilizou 70% dos dados para a criação do dataset de treino e cerca de 30% para o dataset de teste.
+A análise de ambos datasets em comparação com o dataset original demonstra que a proporção de amostras dead e alive é mantida nos datasets de treino e de teste concluindo-se que nos datasets de treino e teste de modelo nenhuma das categorias se encontra sobre-representada ou sub-representada, o que permite a criação de modelos mais precisos.
+
+```{r}
+# para esta fase vamos usar os dados da análise diferencial do edgeR
+set.seed(123456)
+
+#extrair os dados das contagens normalizados
+rna_data = data.frame(dgeObj$counts)
+# ordenar os resultados da expressão diferencial em função do pvalue
+filtered_results_ord = filtered_results$table[order(filtered_results$table$PValue),]
+rna_data_vital_status = as.data.frame(cbind(vital = amostras_filtradas$vital_status, t(rna_data)))
+rna_data_vital_status$vital = as.factor(rna_data_vital_status$vital)
+
+# filtrar para usar apenas os genes que são considerados diferencialmente expressos
+# pois o dataset é muito grande o que vai tornar a análise do machine learning muito pesado
+de_genes = rownames(head(filtered_results_ord,1519))
+rna_data_filtered = rna_data_vital_status[,c("vital",de_genes)]
+
+
+# criação dos dados de treino e de teste, vamos usar um modelo 70% treino e 30%teste
+idx = sample(2, nrow(rna_data_filtered), replace = T, prob=c(0.7,0.3))
+
+# filtragem das amostras de treino
+data_set_treino = rna_data_filtered[idx == 1,] 
+# filtragem das amostras de teste
+dataset_teste = rna_data_filtered[idx == 2,]
+
+# análise das dimensões dos treinos e testes
+dim(data_set_treino)
+dim(data_set_teste)
+
+# análise das proporções para garantir que os modelos vão corresponder à realidade dos dados
+table(rna_data_filtered$vital)/sum(table(rna_data_filtered$vital))
+table(data_set_treino$vital)/sum(table(data_set_treino$vital))
+table(data_set_teste$vital)/sum(table(data_set_teste$vital))
+
+
+folds = caret::createFolds(data_set_treino$vital, k = 10, list = TRUE)
+# Configurar o controle de treinamento com índices corretos
+cv_control = caret::trainControl(method = "cv", number = 10, index = folds, savePredictions = "final",
+                           classProbs = TRUE)
+
+```
+
+
+Neste trabalho vamos utilizar 3 modelos distintos de machine learning (N-Nearest Neighbors, Naive Bayes, Random Forest) para prever com base nos dados de expressão genética se um determinado paciente se encontra no estado alive ou dead, sendo que apenas o melhor modelo vai ser utilizado na previsão final.
+
+#### Modelo N-Nearest Neighbors
+
+
+
+```{r}
+# Treinar o modelo k-NN com uma grade de hiperparâmetros para k
+knn_model = caret::train(vital ~ ., data = data_set_treino[,1:800], method = "knn",
+                  tuneGrid = expand.grid(k = 1:15), trControl = cv_control)
+
+# Identificar o melhor k
+best_k_knn = knn_model$bestTune$k
+
+# Testar o modelo com o conjunto de teste
+#pred_knn = predict(knn_model, newdata = dataset_teste[,1:800]) dá erro
+pred_knn = predict(knn_model, newdata = data_set_treino[,1:800])
+
+# Criar a matriz de confusão
+#confusion_matrix = confusionMatrix(pred_knn, data_set_teste$vital) dá erro
+confusion_matrix_knn = confusionMatrix(pred_knn, data_set_treino$vital)
+confusion_matrix_knn
+# Métricas de desempenho
+precision_knn = confusion_matrix_knn$byClass["Pos Pred Value"]
+recall_knn = confusion_matrix_knn$byClass["Sensitivity"]
+accuracy_knn = confusion_matrix_knn$overall["Accuracy"]
+f1_score_knn = confusion_matrix_knn$byClass["F1"]
+sensitivity_knn = confusion_matrix_knn$byClass["Sensitivity"]
+
+# Imprimir as métricas
+cat("Melhor k:", best_k_knn, "\n")
+cat("Precisão:", precision_knn, "\n")
+cat("Recall:", recall_knn, "\n")
+cat("Acurácia:", accuracy_knn, "\n")
+cat("F1 Score:", f1_score_knn, "\n")
+cat("Sensibilidade:", sensitivity_knn, "\n")
+
+```
+
+
+
 ### Bibliografia
 
 1.  Sung H, Ferlay J, Siegel RL, Laversanne M, Soerjomataram I, Jemal A, Bray F. Global Cancer Statistics 2020: GLOBOCAN Estimates of Incidence and Mortality Worldwide for 36 Cancers in 185 Countries.
