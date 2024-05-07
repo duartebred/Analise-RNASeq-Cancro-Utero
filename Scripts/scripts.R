@@ -529,19 +529,18 @@ table(data_set_treino$vital)/sum(table(data_set_treino$vital))
 table(data_set_teste$vital)/sum(table(data_set_teste$vital))
 
 
+# Criar dobras para validação cruzada diretamente com funções do pacote caret
+folds = caret::createFolds(data_set_treino$vital, k = 10, list = TRUE)
+# Configurar o controle de treinamento com índices corretos
+cv_control = caret::trainControl(method = "cv", number = 10, index = folds, savePredictions = "final",
+                                 classProbs = TRUE)
+
 # Criar as dobras estratificadas usando o pacote rsample para o conjunto de dados filtrado
 #folds = rsample::vfold_cv(rna_data_filtered, strata = "vital", v = 10)
 # Configurar o objeto trainControl com as dobras estratificadas
 #cv.control = caret::trainControl(method = "repeatedcv", number = 10, repeats = 5, index = folds$splits)
 
 #N-Nearest Neighbors
-set.seed(123456)
-# Criar dobras para validação cruzada diretamente com funções do pacote caret
-folds = caret::createFolds(data_set_treino$vital, k = 10, list = TRUE)
-# Configurar o controle de treinamento com índices corretos
-cv_control = caret::trainControl(method = "cv", number = 10, index = folds, savePredictions = "final",
-                           classProbs = TRUE)
-
 # Treinar o modelo k-NN com uma grade de hiperparâmetros para k
 knn_model = caret::train(vital ~ ., data = data_set_treino[,1:800], method = "knn",
                   tuneGrid = expand.grid(k = 1:15), trControl = cv_control)
