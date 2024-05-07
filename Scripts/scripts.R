@@ -584,15 +584,15 @@ set.seed(123456)
 nb_model = train(vital ~ ., data = data_set_treino[,1:800], method = "nb", trControl = cv.control)
 
 # Testar o modelo com o conjunto de teste
-pred_nb = predict(nb_model, newdata = data_set_teste)
+pred_nb = predict(nb_model, newdata = data_set_teste[,1:800])
 
 # Criar a matriz de confusão
 confusion_matrix_nb = confusionMatrix(pred_nb, data_set_teste$vital)
-precision_nb = confusion_matrix$byClass["Pos Pred Value"]
-recall_nb = confusion_matrix$byClass["Sensitivity"]
-accuracy_nb = confusion_matrix$overall["Accuracy"]
-f1_score_nb = confusion_matrix$byClass["F1"]
-sensitivity_nb = confusion_matrix$byClass["Sensitivity"]
+precision_nb = confusion_matrix_nb$byClass["Pos Pred Value"]
+recall_nb = confusion_matrix_nb$byClass["Sensitivity"]
+accuracy_nb = confusion_matrix_nb$overall["Accuracy"]
+f1_score_nb = confusion_matrix_nb$byClass["F1"]
+sensitivity_nb = confusion_matrix_nb$byClass["Sensitivity"]
 
 # Imprimir as métricas
 print(confusion_matrix_nb)
@@ -605,38 +605,38 @@ cat("Sensibilidade:", sensitivity_n, "\n")
 
 #Random Forest
 
-cv.control <- trainControl(method = "repeatedcv", 
-                           number = 10, 
-                           repeats = 5, 
-                           index = lapply(folds$splits, function(x) x$in_id),
-                           indexOut = lapply(folds$splits, function(x) x$out_id),
-                           savePredictions = "final",
-                           classProbs = TRUE)  
+#cv.control <- trainControl(method = "repeatedcv", 
+#                           number = 10, 
+#                           repeats = 5, 
+#                           index = lapply(folds$splits, function(x) x$in_id),
+#                           indexOut = lapply(folds$splits, function(x) x$out_id),
+#                           savePredictions = "final",
+#                           classProbs = TRUE)  
 
 # Treinar o modelo Random Forest
 set.seed(123456)
-rf_model <- train(vital ~ ., data = data_set_treino, method = "rf", 
+rf_model = train(vital ~ ., data = data_set_treino, method = "rf", 
                   tuneLength = 10,  
                   trControl = cv.control)
 
 # Testar o modelo com o conjunto de teste
-pred_rf <- predict(rf_model, newdata = data_set_teste)
+pred_rf = predict(rf_model, newdata = data_set_teste)
 
 # Criar a matriz de confusão
-confusion_matrix <- confusionMatrix(pred_rf, data_set_teste$vital)
-precision <- confusion_matrix$byClass["Pos Pred Value"]
-recall <- confusion_matrix$byClass["Sensitivity"]
-accuracy <- confusion_matrix$overall["Accuracy"]
-f1_score <- confusion_matrix$byClass["F1"]
-sensitivity <- confusion_matrix$byClass["Sensitivity"]
+confusion_matrix_rf = confusionMatrix(pred_rf, data_set_teste$vital)
+precision_rf = confusion_matrix_rf$byClass["Pos Pred Value"]
+recall_rf = confusion_matrix_rf$byClass["Sensitivity"]
+accuracy_rf = confusion_matrix_rf$overall["Accuracy"]
+f1_score_rf = confusion_matrix_rf$byClass["F1"]
+sensitivity_rf = confusion_matrix_rf$byClass["Sensitivity"]
 
 # Imprimir as métricas
-print(confusion_matrix)
-cat("Precisão:", precision, "\n")
-cat("Recall:", recall, "\n")
-cat("Acurácia:", accuracy, "\n")
-cat("F1 Score:", f1_score, "\n")
-cat("Sensibilidade:", sensitivity, "\n")
+print(confusion_matrix_rf)
+cat("Precisão:", precision_rf, "\n")
+cat("Recall:", recall_rf, "\n")
+cat("Acurácia:", accuracy_rf, "\n")
+cat("F1 Score:", f1_score_rf, "\n")
+cat("Sensibilidade:", sensitivity_rf, "\n")
 
 
 #Decision Tree
