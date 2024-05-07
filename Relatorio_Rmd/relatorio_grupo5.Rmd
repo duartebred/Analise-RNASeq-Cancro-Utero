@@ -950,6 +950,64 @@ cat("Sensibilidade:", sensitivity_knn, "\n")
 ```
 
 
+#### Modelo Naive Bayes
+
+
+```{r}
+# Treinar o modelo Naive Bayes
+nb_model = train(vital ~ ., data = data_set_treino[,1:800], method = "nb", trControl = cv.control)
+
+# Testar o modelo com o conjunto de teste
+pred_nb = predict(nb_model, newdata = data_set_teste[,1:800])
+
+# Criar a matriz de confusão
+confusion_matrix_nb = confusionMatrix(pred_nb, data_set_teste$vital)
+precision_nb = confusion_matrix_nb$byClass["Pos Pred Value"]
+recall_nb = confusion_matrix_nb$byClass["Sensitivity"]
+accuracy_nb = confusion_matrix_nb$overall["Accuracy"]
+f1_score_nb = confusion_matrix_nb$byClass["F1"]
+sensitivity_nb = confusion_matrix_nb$byClass["Sensitivity"]
+
+# Imprimir as métricas
+print(confusion_matrix_nb)
+cat("Precisão:", precision_nb, "\n")
+cat("Recall:", recall_nb, "\n")
+cat("Acurácia:", accuracy_nb, "\n")
+cat("F1 Score:", f1_score_nb, "\n")
+cat("Sensibilidade:", sensitivity_n, "\n")
+
+
+```
+
+#### Modelo Random Forest
+
+```{r}
+# Treinar o modelo Random Forest
+rf_model = train(vital ~ ., data = data_set_treino, method = "rf", 
+                  tuneLength = 10,  
+                  trControl = cv.control)
+
+# Testar o modelo com o conjunto de teste
+pred_rf = predict(rf_model, newdata = data_set_teste)
+
+# Criar a matriz de confusão
+confusion_matrix_rf = confusionMatrix(pred_rf, data_set_teste$vital)
+precision_rf = confusion_matrix_rf$byClass["Pos Pred Value"]
+recall_rf = confusion_matrix_rf$byClass["Sensitivity"]
+accuracy_rf = confusion_matrix_rf$overall["Accuracy"]
+f1_score_rf = confusion_matrix_rf$byClass["F1"]
+sensitivity_rf = confusion_matrix_rf$byClass["Sensitivity"]
+
+# Imprimir as métricas
+print(confusion_matrix_rf)
+cat("Precisão:", precision_rf, "\n")
+cat("Recall:", recall_rf, "\n")
+cat("Acurácia:", accuracy_rf, "\n")
+cat("F1 Score:", f1_score_rf, "\n")
+cat("Sensibilidade:", sensitivity_rf, "\n")
+
+```
+
 
 ### Bibliografia
 
