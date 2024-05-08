@@ -802,7 +802,7 @@ data_rna_UCEC_rank = data_rna_UCEC_matrix[genes_mdr,]
 eucD1 = dist(data_rna_UCEC_rank)
 ```
 
-À semelhança do que foi feito anteriormente, para os pacientes, com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de testes estatísticos ttest para cada gene, na matriz de dados, determinando diferenças na expressão genética entre grupos experimentais.
+A semelhança do que foi feito anteriormente, para os pacientes, com a finalidade de calcular a matriz euclidiana, procedeu-se à realização de testes estatísticos ttest para cada gene, na matriz de dados, determinando diferenças na expressão genética entre grupos experimentais.
 De seguida, classificou-se os genes com base nos seu p-values. Posteriormente, selecionou-se os 30 genes com menores valores p, e criou-se uma nova matriz com as linhas correspondentes a esses genes.
 Por fim, calculou-se a matriz de distâncias euclidiana entre esses genes, para análises de clustering.
 
@@ -830,7 +830,7 @@ Esta abordagem de clustering, agrupa os dados de forma a minimizar as distância
 ```{r, echo=TRUE, message=FALSE, warning=FALSE}
 ofs <- c()
 for (k in 2:10) {
-  kmeans <- kmeans(data_rna_UCEC_transposed), centers = k, nstart = 10)
+  kmeans <- kmeans(t(data_rna_UCEC_matrix), centers = k, nstart = 10)
   ofs <- c(ofs, kmeans$tot.withinss)
 }
 plot_data <- data.frame(num_clusters = 2:10, wss = ofs)
@@ -865,7 +865,11 @@ A primeira fase de machine learning consite na preparação dos dados de express
 Em seguida, extrai-se para um data frame os dados das contagens normalizadas presentes no objeto dgeObj. Posteriormente, os resultados da análise de expressão diferencial foram ordenados por ordem crescente de Pvalue, com o intuito de filtrar os genes para apenas serem utilizados para o treino do modelo os genes diferencialmente expressos, uma vez que os restantes não apresentam variações de expressão significativas e por isso não são bons genes para a classificação das amostras. É importante referir que se realizou a transposta da matriz de contagens, uma vez que o objetivo do machine learning consiste na classificação das amostras com base nos dados de expressão e , para isso, os genes necessitam de estar posicionados nas colunas.
 
 Após a filtragem dos genes diferencilamente expressos, procedeu-se à criação do dataset de treino e de teste sendo que se utilizou 70% dos dados para a criação do dataset de treino e cerca de 30% para o dataset de teste.
-A análise de ambos datasets em comparação com o dataset original demonstra que a proporção de amostras dead e alive é mantida nos datasets de treino e de teste concluindo-se que nos datasets de treino e teste de modelo nenhuma das categorias se encontra sobre-representada ou sub-representada, o que permite a criação de modelos mais precisos.
+A análise de ambos datasets em comparação com o dataset original demonstra que a proporção de amostras dead e alive é mantida nos datasets de treino e de teste concluindo-se que nos datasets de treino e teste de modelo nenhuma das categorias se encontra sobre-representada ou sub-representada, o que permite a criação de modelos mais precisos e robustos.
+
+Por fim foram definidas 10 dobras que serão utilizadas para o cross validation tendo como objetivo a avaliação do desempenho dos modelos. No nosso cenário, para realizar a validação cruzada, dividiu-se o conjunto de dados de treino em 10 partes (folds) sendo que cada parte vai ser utilizada alternadamente como conjunto de validação enqanto as restantas serão combinadas para formar um conjunto de treino. O modelo é treinado repetidamente em diferentes combinações de dobras sendo avaliado em cada iteração.
+Em seguida configurou-se o controlo de treino para validação cruzada através da função **trainControl()**.
+
 
 ```{r}
 # para esta fase vamos usar os dados da análise diferencial do edgeR
@@ -910,15 +914,22 @@ cv_control = caret::trainControl(method = "cv", number = 10, index = folds, save
 ```
 
 
-Neste trabalho vamos utilizar 3 modelos distintos de machine learning (N-Nearest Neighbors, Naive Bayes, Random Forest) para prever com base nos dados de expressão genética se um determinado paciente se encontra no estado alive ou dead, sendo que apenas o melhor modelo vai ser utilizado na previsão final.
+Neste trabalho vamos utilizar o modelo N-Nearest Neighbor e o modelo Random Forest, 2 modelos distintos de machine learning que podem ser utilizados para prever, com base nos dados de expressão genética, se um determinado paciente se encontra no estado alive ou dead. Embora se tenham utilizado apenas 2 modelos é importante notar que para a criação de um modelo robusto e preciso deve-se recorrer a vários modelos e por fim selecionar o melhor modelo com base nas métricas de avaliação de cada modelo
 
 #### Modelo N-Nearest Neighbors
 
+O modelo N-Nearest Neighbors é um dos algoritmo de machine learning em que a previsão para uma nova observação ou para novas observações é feita com base nas observações existentes mais semelhantes. A ideia principal deste modelo é que objetos semelhantes tendem a estar em uma proximidade similar no espaço de características. 
+
+Para fazer uma previsão para uma nova observação, o modelo encontra os "N" pontos de dados mais próximos no conjunto de treinamento e faz a previsão com base nos rótulos (ou nos valores de resposta no caso de regressões) desses pontos de dados.
+
+O parâmetro "N" (em R este parametro é representado por K na função train) no modelo N-NN especifica o número de vizinhos mais próximos que devem ser considerados durante uma previsão. A escolha do valor de "N" pode ter um grande impacto no desempenho do modelo, pois valores muito pequenos podem levar a previsões instáveis e sensíveis a ruídos, enquanto valores muito grandes podem resultar em uma simplificação excessiva do modelo.
+
+Para o treino deste modelo selecionou-se os primeiros 600 genes que se apresentam mais diferencialmente expressos, no entanto, o correto seria a utilização da informação obtida durante a análise de redução de dimensionalidade como, por exemplo, no PCA, pois esta análise permite selecionar todos os genes que explicam a variação das amostras. A seleção de um número fixo de genes pode incorrer no problema de o número de genes utilizados não ser suficiente para explicar a variação dos dados. Durante o teste do modelo, foi utilizado o conjunto treino, pois a utilização do dataset de teste resultou em um erro que não permitiu testar do modelo com o dataset teste, no entano esta abordagem não é a mais correta nem recomendada, visto que pode introduzir enviesamento nas métricas de avaliação do modelo
 
 
 ```{r}
 # Treinar o modelo k-NN com uma grade de hiperparâmetros para k
-knn_model = caret::train(vital ~ ., data = data_set_treino[,1:800], method = "knn",
+knn_model = caret::train(vital ~ ., data = data_set_treino[,1:600], method = "knn",
                   tuneGrid = expand.grid(k = 1:15), trControl = cv_control)
 
 # Identificar o melhor k
@@ -926,10 +937,10 @@ best_k_knn = knn_model$bestTune$k
 
 # Testar o modelo com o conjunto de teste
 #pred_knn = predict(knn_model, newdata = dataset_teste[,1:800]) dá erro
-pred_knn = predict(knn_model, newdata = data_set_treino[,1:800])
+pred_knn = predict(knn_model, newdata = data_set_treino[,1:600])
 
 # Criar a matriz de confusão
-#confusion_matrix = confusionMatrix(pred_knn, data_set_teste$vital) dá erro
+#confusion_matrix = confusionMatrix(pred_knn, dataset_teste$vital) dá erro
 confusion_matrix_knn = confusionMatrix(pred_knn, data_set_treino$vital)
 confusion_matrix_knn
 # Métricas de desempenho
@@ -950,47 +961,29 @@ cat("Sensibilidade:", sensitivity_knn, "\n")
 ```
 
 
-#### Modelo Naive Bayes
-
-
-```{r}
-# Treinar o modelo Naive Bayes
-nb_model = train(vital ~ ., data = data_set_treino[,1:800], method = "nb", trControl = cv.control)
-
-# Testar o modelo com o conjunto de teste
-pred_nb = predict(nb_model, newdata = data_set_teste[,1:800])
-
-# Criar a matriz de confusão
-confusion_matrix_nb = confusionMatrix(pred_nb, data_set_teste$vital)
-precision_nb = confusion_matrix_nb$byClass["Pos Pred Value"]
-recall_nb = confusion_matrix_nb$byClass["Sensitivity"]
-accuracy_nb = confusion_matrix_nb$overall["Accuracy"]
-f1_score_nb = confusion_matrix_nb$byClass["F1"]
-sensitivity_nb = confusion_matrix_nb$byClass["Sensitivity"]
-
-# Imprimir as métricas
-print(confusion_matrix_nb)
-cat("Precisão:", precision_nb, "\n")
-cat("Recall:", recall_nb, "\n")
-cat("Acurácia:", accuracy_nb, "\n")
-cat("F1 Score:", f1_score_nb, "\n")
-cat("Sensibilidade:", sensitivity_n, "\n")
-
-
-```
-
 #### Modelo Random Forest
+
+O modelo Random Forest é um outro algoritmo de machine learning construído com base em uma técnica conhecida como "ensemble learning", na qual várias árvores de decisão são combinadas para formar um modelo  poderoso e robusto.
+
+Este modelo baseia-se na ideia de que a combinação de múltiplas árvores de decisão pode reduzir o overfitting e aumentar a sua precisão de previsões. Cada árvore de decisão no Random Forest é treinada com uma amostra aleatória dos dados de treino e utiliza uma subamostra aleatória dos recursos em cada divisão. Isto introduz aleatoriedade no processo de construção das árvores e o que permite reduzir a correlação entre as árvores individuais, resultando na melhoria da generalização do modelo.
+
+Quando uma nova observação é fornecida ao modelo para fazer uma previsão, cada árvore na floresta faz uma previsão individual e a previsão final é determinada por uma votação maioritária das previsões de todas as árvores.
+Este tipo de modelo é altamente versátil e robusto sendo útil para realizar a previsão de dados grandes e de alta dimensionalidade, apresenta elevada resistência ao overfitting e é capaz de lidar com dados ausentes e variáveis categóricas sem necessidade de pre-processamento
+
+Tal como para o modelo anterior, para o treino deste modelo selecionou-se os primeiros 600 genes mais diferencialmente expressos sendo que a abordagem mais correta passaria pela incorporação dos resultados obtidos no PCA. Durante o teste do modelo, utilizou-se novamente o conjunto treino, pois o dataset de teste resultou em erro que não permitiu o teste do modelo e por isso optou-se por recorrer ao dataset de treino para testar o modelo, tendo-se consciência de que estas abordagem pode provocar enviesamento
 
 ```{r}
 # Treinar o modelo Random Forest
-rf_model = train(vital ~ ., data = data_set_treino, method = "rf", 
-                  tuneLength = 10,  
+rf_model = train(vital ~ ., data = data_set_treino[,1:600], method = "rf", 
+                  tuneLength = 6,  
                   trControl = cv.control)
 
 # Testar o modelo com o conjunto de teste
-pred_rf = predict(rf_model, newdata = data_set_teste)
+#pred_rf = predict(rf_model, newdata = dataset_teste[,1:600])
+pred_rf = predict(rf_model, newdata = data_set_treino[,1:600]) # não é o mais correto mas o dataset_treino dá erro
 
 # Criar a matriz de confusão
+#confusion_matrix_rf = confusionMatrix(pred_rf, dataset_teste$vital)
 confusion_matrix_rf = confusionMatrix(pred_rf, data_set_teste$vital)
 precision_rf = confusion_matrix_rf$byClass["Pos Pred Value"]
 recall_rf = confusion_matrix_rf$byClass["Sensitivity"]
@@ -1008,6 +1001,7 @@ cat("Sensibilidade:", sensitivity_rf, "\n")
 
 ```
 
+Com a análise das métricas dos dois modelos analisados conclui-se que os modelos apresentam eleveda precisão (cerca de 90%), no entanto estas métricas podem estar enviezadas pelo facto do serem geradas para o conjunto de teste, não sendo por isso muito confiáveis. Além disso, o número de amostras utilizados para a criação dos modelos é bastante reduzido o que pode resultar em modelos poucos precisos para a previsão de novos dados
 
 ### Bibliografia
 
