@@ -542,15 +542,15 @@ cv_control = caret::trainControl(method = "cv", number = 10, index = folds, save
 
 #N-Nearest Neighbors
 # Treinar o modelo k-NN com uma grade de hiperparâmetros para k
-knn_model = caret::train(vital ~ ., data = data_set_treino[,1:800], method = "knn",
+knn_model = caret::train(vital ~ ., data = data_set_treino[,1:600], method = "knn",
                   tuneGrid = expand.grid(k = 1:15), trControl = cv_control)
 
 # Identificar o melhor k
 best_k_knn = knn_model$bestTune$k
 
 # Testar o modelo com o conjunto de teste
-pred_knn = predict(knn_model, newdata = dataset_teste[,1:800])
-pred_knn = predict(knn_model, newdata = data_set_treino[,1:800])
+pred_knn = predict(knn_model, newdata = dataset_teste[,1:600])
+pred_knn = predict(knn_model, newdata = data_set_treino[,1:600])
 
 # Criar a matriz de confusão
 confusion_matrix = confusionMatrix(pred_knn, data_set_teste$vital)
@@ -581,10 +581,10 @@ cat("Sensibilidade:", sensitivity_knn, "\n")
 
 # Treinar o modelo Naive Bayes
 set.seed(123456)
-nb_model = train(vital ~ ., data = data_set_treino[,1:800], method = "nb", trControl = cv.control)
+nb_model = train(vital ~ ., data = data_set_treino[,1:600], method = "nb", trControl = cv.control)
 
 # Testar o modelo com o conjunto de teste
-pred_nb = predict(nb_model, newdata = data_set_teste[,1:800])
+pred_nb = predict(nb_model, newdata = data_set_teste[,1:600])
 
 # Criar a matriz de confusão
 confusion_matrix_nb = confusionMatrix(pred_nb, data_set_teste$vital)
@@ -615,15 +615,16 @@ cat("Sensibilidade:", sensitivity_n, "\n")
 
 # Treinar o modelo Random Forest
 set.seed(123456)
-rf_model = train(vital ~ ., data = data_set_treino, method = "rf", 
-                  tuneLength = 10,  
+rf_model = train(vital ~ ., data = data_set_treino[,1:600], method = "rf", 
+                  tuneLength = 6,  
                   trControl = cv.control)
 
 # Testar o modelo com o conjunto de teste
-pred_rf = predict(rf_model, newdata = data_set_teste)
-
+pred_rf = predict(rf_model, newdata = data_set_teste[,1:600])
+pred_rf = predict(rf_model, newdata = data_set_treino[,1:600])
 # Criar a matriz de confusão
 confusion_matrix_rf = confusionMatrix(pred_rf, data_set_teste$vital)
+confusion_matrix_rf = confusionMatrix(pred_rf, data_set_treino$vital)
 precision_rf = confusion_matrix_rf$byClass["Pos Pred Value"]
 recall_rf = confusion_matrix_rf$byClass["Sensitivity"]
 accuracy_rf = confusion_matrix_rf$overall["Accuracy"]
