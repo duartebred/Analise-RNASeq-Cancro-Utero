@@ -2,3 +2,4 @@
 .Rhistory
 mRNA_TCGA-UCEC.rda
 Relatorio_Rmd/MANIFEST.txt
+Data/expressao_genetica.xlsx
