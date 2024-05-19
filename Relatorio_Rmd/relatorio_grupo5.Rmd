@@ -419,7 +419,7 @@ amostras_filtradas$vital_status = factor(amostras_filtradas$vital_status)
 ddsSE = DESeqDataSetFromMatrix(countData = dados_EA, colData = amostras_filtradas, design = ~vital_status)
 
 
-# filtragem de genes com menos de 15 ocorrências em pelo menos 3 amostras
+# filtragem de genes com menos de 20 ocorrências em pelo menos 4 amostras
 genes_manter = rowSums(counts(ddsSE) >= 20) >= 4
 ddsSE = ddsSE[genes_manter, ]
 dim(ddsSE)
